@@ -33,6 +33,7 @@ extern exit
 
 %define WIDTH	600
 %define HEIGHT	600
+%define RAYON_MAX 300
 
 global main 
 
@@ -149,71 +150,23 @@ mov rdi, HEIGHT
 call random_number
 mov r11w, ax
 
+mov rdi, RAYON_MAX
+call random_number
+mov r12w, ax
+
 mov rdi,qword[display_name]
 mov rsi,qword[window]		
 mov rdx,qword[gc]
 
 mov bx,r10w	; COORDONNEE en X DU CERCLE
-mov cx,200	; RAYON DU CERCLE
+mov cx,r12w	; RAYON DU CERCLE
 sub bx,cx				
 movzx rcx,bx			
 mov bx,r11w	; COORDONNEE en Y DU CERCLE
-mov r15w,200	; RAYON DU CERCLE
+mov r15w,r12w	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
-mov r9,200	; RAYON DU CERCLE
-shl r9,1
-mov rax,23040
-push rax
-push 0
-push r9
-call XDrawArc
-
-;couleur du cercle 2
-mov rdi,qword[display_name]
-mov rsi,qword[gc]
-mov edx,0x00FF00	; Couleur du crayon ; vert
-call XSetForeground
-
-; Dessin du cercle 2
-mov rdi,qword[display_name]
-mov rsi,qword[window]		
-mov rdx,qword[gc]			
-mov bx,200	; COORDONNEE en X DU CERCLE
-mov cx,100 ; RAYON DU CERCLE
-sub bx,cx				
-movzx rcx,bx			
-mov bx,400	; COORDONNEE en Y DU CERCLE
-mov r15w,100	; RAYON DU CERCLE
-sub bx,r15w
-movzx r8,bx		
-mov r9,100	; RAYON DU CERCLE
-shl r9,1
-mov rax,23040
-push rax
-push 0
-push r9
-call XDrawArc
-
-;couleur du cercle 3
-mov rdi,qword[display_name]
-mov rsi,qword[gc]
-mov edx,0x0000FF	; Couleur du crayon ; vert
-call XSetForeground
-
-; Dessin du cercle 3
-mov rdi,qword[display_name]
-mov rsi,qword[window]		
-mov rdx,qword[gc]			
-mov bx,50	; COORDONNEE en X DU CERCLE
-mov cx,250 ; RAYON DU CERCLE
-sub bx,cx				
-movzx rcx,bx			
-mov bx,150	; COORDONNEE en Y DU CERCLE
-mov r15w,250	; RAYON DU CERCLE
-sub bx,r15w
-movzx r8,bx		
-mov r9,250	; RAYON DU CERCLE
+movzx r9,r12w	; RAYON DU CERCLE
 shl r9,1
 mov rax,23040
 push rax
@@ -229,7 +182,7 @@ call XDrawArc
 flush:
 mov rdi,qword[display_name]
 call XFlush
-jmp boucle
+;jmp boucle
 mov rax,34
 syscall
 
