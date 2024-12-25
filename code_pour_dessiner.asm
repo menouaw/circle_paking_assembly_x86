@@ -32,7 +32,7 @@ extern exit
 %define BYTE	1
 
 %define WIDTH	600
-%define HEIGHT	200
+%define HEIGHT	600
 
 global main 
 
@@ -141,14 +141,23 @@ mov edx,0xFF0000	; Couleur du crayon ; rouge
 call XSetForeground
 
 ; Dessin du cercle 1
+mov rdi, WIDTH
+call random_number
+mov r10w, ax
+
+mov rdi, HEIGHT
+call random_number
+mov r11w, ax
+
 mov rdi,qword[display_name]
 mov rsi,qword[window]		
-mov rdx,qword[gc]			
-mov bx,400	; COORDONNEE en X DU CERCLE
+mov rdx,qword[gc]
+
+mov bx,r10w	; COORDONNEE en X DU CERCLE
 mov cx,200	; RAYON DU CERCLE
 sub bx,cx				
 movzx rcx,bx			
-mov bx,300	; COORDONNEE en Y DU CERCLE
+mov bx,r11w	; COORDONNEE en Y DU CERCLE
 mov r15w,200	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
