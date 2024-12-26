@@ -69,7 +69,7 @@ main:
 ;###########################################################
 ; Mettez ici votre code qui devra s'exécuter avant le dessin
 ;###########################################################
-mov byte[i], 1
+mov byte[i], 0
 
 
 
@@ -149,6 +149,7 @@ call XSetForeground
 
 ; Dessin du cercle
 boucle_cercles:
+mov r14b, byte[i]
 mov rdi, WIDTH
 call random_number
 mov r10w, ax
@@ -165,17 +166,17 @@ mov rdi,qword[display_name]
 mov rsi,qword[window]		
 mov rdx,qword[gc]
 
-mov bx,r10w	; COORDONNEE en X DU CERCLE
-mov word[pre_circles_x], bx
-
 mov cx,r12w	; RAYON DU CERCLE
-mov word[pre_circles_r], r12w
+mov word[pre_circles_r+r14*WORD], r12w
+
+mov bx,r10w	; COORDONNEE en X DU CERCLE
+mov word[pre_circles_x+r14*WORD], bx
 
 sub bx,cx				
 movzx rcx,bx			
 
 mov bx,r11w	; COORDONNEE en Y DU CERCLE
-mov word[pre_circles_y], bx
+mov word[pre_circles_y+r14*WORD], bx
 mov r15w,r12w	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
@@ -185,6 +186,11 @@ mov rax,23040
 push rax
 push 0
 push r9
+
+boucle_verif_chevauchement:
+
+boucle_verif_adjacence:
+
 call XDrawArc
 
 boucle_affichage:
@@ -192,26 +198,21 @@ boucle_affichage:
     mov rdi, format
 
     ; Copie de l'indice i dans rsi (premier argument entier de printf)
-    movzx rsi, byte[i]
+    movzx rsi, r14b                     ; r14b <=> byte[i]
 
-    movzx rdx, word[pre_circles_x] ; on copie la valeur à l'adresse pre_circles_x dans rdx
+    movzx rdx, word[pre_circles_x+r14*WORD] ; on copie la valeur à l'adresse pre_circles_x dans rdx
 
-    movzx rcx, word[pre_circles_y] ; on copie la valeur à l'adresse pre_circles_y dans rcx
+    movzx rcx, word[pre_circles_y+r14*WORD] ; on copie la valeur à l'adresse pre_circles_y dans rcx
     
-    movzx r8, word[pre_circles_r]
+    movzx r8, word[pre_circles_r+r14*WORD]
 
-    mov rax, 0  ; Pas d'arguments flottants
-    call printf   ; Appel de printf pour afficher les coordonnées
-
-    jb boucle_affichage
+    mov rax, 0 
+    call printf  
 	
-	mov rdi,crlf
-	mov rax,0
-    call printf
-
+	
 ; Incrémentation et comparaison du compteur
 inc   byte[i]        ; Incrémentation du compteur
-cmp   byte[i], NB_PRE_CIRCLES    ; Comparaison du compteur à 3
+cmp   byte[i], NB_PRE_CIRCLES-1    ; Comparaison du compteur à 3
 jb    boucle_cercles   ; Saut si bl < 3 (retour au début de la boucle)
 
 ; ############################
