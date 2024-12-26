@@ -162,9 +162,9 @@ mov rdi, RAYON_MAX
 call random_number
 mov r12w, ax
 
-mov rdi,qword[display_name]
-mov rsi,qword[window]		
-mov rdx,qword[gc]
+;mov rdi,qword[display_name]
+;mov rsi,qword[window]		
+;mov rdx,qword[gc]
 
 mov cx,r12w	; RAYON DU CERCLE
 mov word[pre_circles_r+r14*WORD], r12w
@@ -177,7 +177,48 @@ movzx rcx,bx
 
 mov bx,r11w	; COORDONNEE en Y DU CERCLE
 mov word[pre_circles_y+r14*WORD], bx
-mov r15w,r12w	; RAYON DU CERCLE
+
+mov r13, 0
+boucle_verif_restrictions:
+    cmp r13, r14
+    je next
+    ; points_gap(edi(x1), esi(y1), edx(x2), r8d(y2))
+    ; => rax(distance)
+    movzx edi, word[pre_circles_x+r14*WORD]
+    movzx esi, word[pre_circles_y+r14*WORD]
+    
+    movzx edx, word[pre_circles_x+r13*WORD]
+    movzx r8d, word[pre_circles_y+r13*WORD]
+    
+    call points_gap
+    
+    ; addition des rayons (word[pre_circles_r+14*WORD] + word[pre_circles_r+13*WORD])
+    movzx r10, word[pre_circles_r+r14*WORD]
+    movzx r11, word[pre_circles_r+r13*WORD]
+    add r10, r11
+    
+    cmp rax, r10       ; compare la distance avec l'addition des rayons
+    jle boucle_cercles ; <chevauchement,=tangents
+    
+    next:
+        inc r13
+        cmp r13, NB_PRE_CIRCLES-1
+        jb boucle_verif_restrictions
+        
+mov rdi,qword[display_name]
+mov rsi,qword[window]		
+mov rdx,qword[gc]
+
+mov cx,word[pre_circles_r+r14*WORD]	; RAYON DU CERCLE
+
+mov bx,word[pre_circles_x+r14*WORD]	; COORDONNEE en X DU CERCLE
+
+sub bx,cx				
+movzx rcx,bx			
+
+mov bx,word[pre_circles_y+r14*WORD]	; COORDONNEE en Y DU CERCLE
+
+mov r15w,word[pre_circles_r+r14*WORD]	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
 movzx r9,r12w	; RAYON DU CERCLE
@@ -187,10 +228,7 @@ push rax
 push 0
 push r9
 
-boucle_verif_chevauchement:
-
-boucle_verif_adjacence:
-
+        
 call XDrawArc
 
 boucle_affichage:
@@ -202,7 +240,7 @@ boucle_affichage:
 
     movzx rdx, word[pre_circles_x+r14*WORD] ; on copie la valeur à l'adresse pre_circles_x dans rdx
 
-    movzx rcx, word[pre_circles_y+r14*WORD] ; on copie la valeur à l'adresse pre_circles_y dans rcx
+    movzx rcx, word[pre_circles_y+r14*WORD] 
     
     movzx r8, word[pre_circles_r+r14*WORD]
 
@@ -213,7 +251,7 @@ boucle_affichage:
 ; Incrémentation et comparaison du compteur
 inc   byte[i]        ; Incrémentation du compteur
 cmp   byte[i], NB_PRE_CIRCLES-1    ; Comparaison du compteur à 3
-jb    boucle_cercles   ; Saut si bl < 3 (retour au début de la boucle)
+jb    boucle_cercles   ; Saut si byte[i] < 3 (retour au début de la boucle)
 
 ; ############################
 ; # FIN DE LA ZONE DE DESSIN #
