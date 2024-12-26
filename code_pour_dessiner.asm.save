@@ -33,11 +33,8 @@ extern exit
 
 %define WIDTH	600
 %define HEIGHT	600
-%define RAYON_MAX 300
 
-%define NB_CIRCLES 3
-
-global main 
+global main
 
 section .bss
 display_name:	resq	1
@@ -48,7 +45,6 @@ width:         	resd	1
 height:        	resd	1
 window:		resq	1
 gc:		resq	1
-i: resb 1
 
 section .data
 
@@ -65,7 +61,8 @@ main:
 ;###########################################################
 ; Mettez ici votre code qui devra s'exécuter avant le dessin
 ;###########################################################
-mov byte[i], 0
+
+
 
 
 
@@ -130,7 +127,7 @@ je dessin							; on saute au label 'dessin'
 
 cmp dword[event],KeyPress			; Si on appuie sur une touche
 je closeDisplay						; on saute au label 'closeDisplay' qui ferme la fenêtre
-jmp boucle
+;jmp boucle
 
 ;#########################################
 ;#		DEBUT DE LA ZONE DE DESSIN		 #
@@ -144,32 +141,19 @@ mov edx,0xFF0000	; Couleur du crayon ; rouge
 call XSetForeground
 
 ; Dessin du cercle 1
-boucle_cercles:
-mov rdi, WIDTH
-call random_number
-mov r10w, ax
-
-mov rdi, HEIGHT
-call random_number
-mov r11w, ax
-
-mov rdi, RAYON_MAX
-call random_number
-mov r12w, ax
-
 mov rdi,qword[display_name]
 mov rsi,qword[window]		
 mov rdx,qword[gc]
-
-mov bx,r10w	; COORDONNEE en X DU CERCLE
-mov cx,r12w	; RAYON DU CERCLE
+			
+mov bx,400	; COORDONNEE en X DU CERCLE
+mov cx,200	; RAYON DU CERCLE
 sub bx,cx				
 movzx rcx,bx			
-mov bx,r11w	; COORDONNEE en Y DU CERCLE
-mov r15w,r12w	; RAYON DU CERCLE
+mov bx,300	; COORDONNEE en Y DU CERCLE
+mov r15w,200	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
-movzx r9,r12w	; RAYON DU CERCLE
+mov r9,200	; RAYON DU CERCLE
 shl r9,1
 mov rax,23040
 push rax
@@ -177,10 +161,57 @@ push 0
 push r9
 call XDrawArc
 
-; Incrémentation et comparaison du compteur
-inc   byte[i]        ; Incrémentation du compteur
-cmp   byte[i], NB_CIRCLES-1    ; Comparaison du compteur à 3
-jb    boucle_cercles   ; Saut si bl < 3 (retour au début de la boucle)
+;couleur du cercle 2
+mov rdi,qword[display_name]
+mov rsi,qword[gc]
+mov edx,0x00FF00	; Couleur du crayon ; vert
+call XSetForeground
+
+; Dessin du cercle 2
+mov rdi,qword[display_name]
+mov rsi,qword[window]		
+mov rdx,qword[gc]			
+mov bx,200	; COORDONNEE en X DU CERCLE
+mov cx,100 ; RAYON DU CERCLE
+sub bx,cx				
+movzx rcx,bx			
+mov bx,400	; COORDONNEE en Y DU CERCLE
+mov r15w,100	; RAYON DU CERCLE
+sub bx,r15w
+movzx r8,bx		
+mov r9,100	; RAYON DU CERCLE
+shl r9,1
+mov rax,23040
+push rax
+push 0
+push r9
+call XDrawArc
+
+;couleur du cercle 3
+mov rdi,qword[display_name]
+mov rsi,qword[gc]
+mov edx,0x0000FF	; Couleur du crayon ; vert
+call XSetForeground
+
+; Dessin du cercle 3
+mov rdi,qword[display_name]
+mov rsi,qword[window]		
+mov rdx,qword[gc]			
+mov bx,50	; COORDONNEE en X DU CERCLE
+mov cx,250 ; RAYON DU CERCLE
+sub bx,cx				
+movzx rcx,bx			
+mov bx,150	; COORDONNEE en Y DU CERCLE
+mov r15w,250	; RAYON DU CERCLE
+sub bx,r15w
+movzx r8,bx		
+mov r9,250	; RAYON DU CERCLE
+shl r9,1
+mov rax,23040
+push rax
+push 0
+push r9
+call XDrawArc
 
 ; ############################
 ; # FIN DE LA ZONE DE DESSIN #
@@ -214,4 +245,3 @@ random_number:
      div di
      mov ax, dx
  ret
-
