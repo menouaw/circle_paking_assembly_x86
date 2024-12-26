@@ -128,7 +128,7 @@ je dessin							; on saute au label 'dessin'
 
 cmp dword[event],KeyPress			; Si on appuie sur une touche
 je closeDisplay						; on saute au label 'closeDisplay' qui ferme la fenêtre
-;jmp boucle
+jmp boucle
 
 ;#########################################
 ;#		DEBUT DE LA ZONE DE DESSIN		 #
@@ -182,7 +182,7 @@ call XDrawArc
 flush:
 mov rdi,qword[display_name]
 call XFlush
-;jmp boucle
+jmp boucle
 mov rax,34
 syscall
 
