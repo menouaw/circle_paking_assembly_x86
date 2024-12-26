@@ -35,7 +35,7 @@ extern exit
 %define HEIGHT	600
 %define RAYON_MAX 300
 
-%define NB_CIRCLES 3
+%define NB_PRE_CIRCLES 3
 
 global main 
 
@@ -53,7 +53,10 @@ i: resb 1
 section .data
 
 event:		times	24 dq 0
-
+pre_circles_x: times NB_PRE_CIRCLES dw 0
+pre_circles_y: times NB_PRE_CIRCLES dw 0
+format: db "Cercle %d : x = %d, y = %d", 10, 0 ; Format d'affichage
+crlf: db 10,0 ; saut de ligne
 
 section .text
 	
@@ -65,7 +68,7 @@ main:
 ;###########################################################
 ; Mettez ici votre code qui devra s'exécuter avant le dessin
 ;###########################################################
-mov byte[i], 0
+mov byte[i], 1
 
 
 
@@ -137,13 +140,13 @@ jmp boucle
 ;#########################################
 dessin:
 
-;couleur du cercle 1
+;couleur du cercle
 mov rdi,qword[display_name]
 mov rsi,qword[gc]
 mov edx,0xFF0000	; Couleur du crayon ; rouge
 call XSetForeground
 
-; Dessin du cercle 1
+; Dessin du cercle
 boucle_cercles:
 mov rdi, WIDTH
 call random_number
@@ -162,10 +165,13 @@ mov rsi,qword[window]
 mov rdx,qword[gc]
 
 mov bx,r10w	; COORDONNEE en X DU CERCLE
+mov word[pre_circles_x], bx
 mov cx,r12w	; RAYON DU CERCLE
 sub bx,cx				
 movzx rcx,bx			
+
 mov bx,r11w	; COORDONNEE en Y DU CERCLE
+mov word[pre_circles_y], bx
 mov r15w,r12w	; RAYON DU CERCLE
 sub bx,r15w
 movzx r8,bx		
@@ -177,9 +183,29 @@ push 0
 push r9
 call XDrawArc
 
+boucle_affichage:
+    ; Chargement de l'adresse de la chaîne de format dans rdi
+    mov rdi, format
+
+    ; Copie de l'indice i dans rsi (premier argument entier de printf)
+    movzx rsi, byte[i]
+
+    movzx rdx, word[pre_circles_x] ; on copie la valeur à l'adresse pre_circles_x + i*2 dans rdx
+
+    movzx rcx, word [pre_circles_y] ; on copie la valeur à l'adresse pre_circles_y + i*2 dans rcx
+
+    mov rax, 0  ; Pas d'arguments flottants
+    call printf   ; Appel de printf pour afficher les coordonnées
+
+    jb boucle_affichage
+	
+	mov rdi,crlf
+	mov rax,0
+    call printf
+
 ; Incrémentation et comparaison du compteur
 inc   byte[i]        ; Incrémentation du compteur
-cmp   byte[i], NB_CIRCLES-1    ; Comparaison du compteur à 3
+cmp   byte[i], NB_PRE_CIRCLES    ; Comparaison du compteur à 3
 jb    boucle_cercles   ; Saut si bl < 3 (retour au début de la boucle)
 
 ; ############################
@@ -215,3 +241,29 @@ random_number:
      mov ax, dx
  ret
 
+; points_gap(edi(x1), esi(y1), edx(x2), r8d(y2))
+; => rax(distance)
+points_gap: 
+    ; Calculer (x1 - x2)^2
+    mov eax, edi
+    sub eax, edx
+    imul eax, eax 
+
+    ; Calculer (y1 - y2)^2
+    mov ebx, esi
+    sub ebx, r8d
+    imul ebx, ebx
+
+    ; Calculer (x1 - x2)^2 + (y1 - y2)^2
+    add eax, ebx
+
+    ; Convertir le résultat en flottant
+    cvtsi2sd xmm0, eax 
+
+    ; Calculer la racine carrée
+    sqrtsd xmm1, xmm0 
+
+    ; Convertir la racine carrée en entier et arrondir
+    cvtsd2si eax, xmm1 
+
+    ret
