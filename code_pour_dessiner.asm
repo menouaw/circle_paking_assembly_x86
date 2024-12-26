@@ -55,7 +55,8 @@ section .data
 event:		times	24 dq 0
 pre_circles_x: times NB_PRE_CIRCLES dw 0
 pre_circles_y: times NB_PRE_CIRCLES dw 0
-format: db "Cercle %d : x = %d, y = %d", 10, 0 ; Format d'affichage
+pre_circles_r: times NB_PRE_CIRCLES dw 0
+format: db "Cercle %d : x = %d, y = %d, r = %d", 10, 0 ; Format d'affichage
 crlf: db 10,0 ; saut de ligne
 
 section .text
@@ -166,7 +167,10 @@ mov rdx,qword[gc]
 
 mov bx,r10w	; COORDONNEE en X DU CERCLE
 mov word[pre_circles_x], bx
+
 mov cx,r12w	; RAYON DU CERCLE
+mov word[pre_circles_r], r12w
+
 sub bx,cx				
 movzx rcx,bx			
 
@@ -190,9 +194,11 @@ boucle_affichage:
     ; Copie de l'indice i dans rsi (premier argument entier de printf)
     movzx rsi, byte[i]
 
-    movzx rdx, word[pre_circles_x] ; on copie la valeur à l'adresse pre_circles_x + i*2 dans rdx
+    movzx rdx, word[pre_circles_x] ; on copie la valeur à l'adresse pre_circles_x dans rdx
 
-    movzx rcx, word [pre_circles_y] ; on copie la valeur à l'adresse pre_circles_y + i*2 dans rcx
+    movzx rcx, word[pre_circles_y] ; on copie la valeur à l'adresse pre_circles_y dans rcx
+    
+    movzx r8, word[pre_circles_r]
 
     mov rax, 0  ; Pas d'arguments flottants
     call printf   ; Appel de printf pour afficher les coordonnées
