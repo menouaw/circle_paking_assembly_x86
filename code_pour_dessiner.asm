@@ -122,6 +122,7 @@ main:
     mov    rsi, qword[window]
     call   XMapWindow
 
+    mov    rdi, qword[display_name]
     mov    rsi, qword[window]
     mov    rdx, 0
     mov    rcx, 0
@@ -395,13 +396,20 @@ boucle_cercle_proche:
         
     cmp word[dist_min], r8w ; r8w étant la distance minimum aux cercles initiaux
     je case_cp_init
+    jmp case_cp_tan
     
     case_cp_init:
-        mov word[post_circles_r+r14*WORD], r8w
+        ; new_circle_r = dist_min - closest_circle_r
+        mov ax, r8w
+        mov r15w, word[ind_closest_init]
+        sub ax, word[pre_circles_r+r15*WORD]
+        mov word[post_circles_r+r14*WORD], ax
         jmp generate_circle_step_two
     
     case_cp_tan:
-        mov r8w, word[dist_min]
+        mov ax, r8w
+        mov r15w, word[ind_closest_tan]
+        sub ax, word[post_circles_r+r15*WORD]
         mov word[post_circles_r+r14*WORD], r8w
         
     generate_circle_step_two:
@@ -418,8 +426,8 @@ boucle_cercle_proche:
         mov    r15w, word[post_circles_r+r14*WORD]
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, r12w
-        ;shl    r9, 1
+        movzx  r9, word[post_circles_r+r14*WORD]
+        shl    r9, 1
         mov    rax, 23040
         push   rax
         push   0
