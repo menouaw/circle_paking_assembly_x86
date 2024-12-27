@@ -35,7 +35,8 @@ extern    exit
 %define    HEIGHT                 600
 %define    RAYON_MAX             300
 
-%define    NB_PRE_CIRCLES        5
+%define    NB_PRE_CIRCLES        3
+%define    NB_POST_CIRCLES       5
 
 global    main
 
@@ -48,14 +49,26 @@ width:           resd    1
 height:          resd    1
 window:          resq    1
 gc:              resq    1
+
 i:               resb    1
+
 
 section .data
 event:           times    24 dq 0
+
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
 pre_circles_r:   times    NB_PRE_CIRCLES dw 0
-format:          db       "Cercle %d : x = %d, y = %d, r = %d", 10, 0
+
+post_circles_x:  times    NB_POST_CIRCLES dw 0
+post_circles_y:  times    NB_POST_CIRCLES dw 0
+post_circles_r:  times    NB_POST_CIRCLES dw 0
+
+dist_max: dw 0
+
+fmt_init_circles:          db       "Cercle initial %d : x = %d, y = %d, r = %d", 10, 0
+fmt_tan_circles:          db       "Cercle tangent %d : x = %d, y = %d, r = %d", 10, 0
+
 crlf:            db       10, 0
 
 section .text
@@ -134,12 +147,15 @@ boucle:                              ; boucle de gestion des évènements
 ;#        DEBUT DE LA ZONE DE DESSIN     #
 ;#########################################
 dessin:
+    ; itère le programme jusqu'à l'arrêt (appui sur une touche)
     mov    rdi, qword[display_name]
     mov    rsi, qword[gc]
     mov    edx, 0xFF0000            ; Couleur du crayon ; rouge
     call   XSetForeground
 
-boucle_cercles:
+; ETAPE 1
+boucle_cercles_initiaux:
+    ; génère les cercles initiaux
     mov    r14b, byte[i]
     mov    rdi, WIDTH
     call   random_number
@@ -166,9 +182,10 @@ boucle_cercles:
 
     mov    r13, 0
 
-boucle_verif_restrictions:
+boucle_verif_pre_restrictions:
+    ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
     cmp    r13, r14
-    je     next
+    je     next_pre
 
     movzx  edi, word[pre_circles_x+r14*WORD]
     movzx  esi, word[pre_circles_y+r14*WORD]
@@ -182,17 +199,18 @@ boucle_verif_restrictions:
     add    r10, r11
 
     cmp    rax, r10
-    jle    boucle_cercles
+    jle    boucle_cercles_initiaux
 
-next:
+next_pre:
+    ; vérifications passées, affiche le cercle courant
     inc    r13
-    cmp    r13, NB_PRE_CIRCLES-1
-    jb     boucle_verif_restrictions
+    cmp    r13, NB_PRE_CIRCLES
+    jb     boucle_verif_pre_restrictions
 
     mov    rdi, qword[display_name]
     mov    rsi, qword[window]
     mov    rdx, qword[gc]
-mov    cx, word[pre_circles_r+r14*WORD]
+    mov    cx, word[pre_circles_r+r14*WORD]
 
     mov    bx, word[pre_circles_x+r14*WORD]
     sub    bx, cx
@@ -210,9 +228,12 @@ mov    cx, word[pre_circles_r+r14*WORD]
     push   r9
 
     call   XDrawArc
+    
+; FIN ETAPE 1
 
-boucle_affichage:
-    mov    rdi, format
+boucle_affichage_pre:
+    ; affichage dans la sortie standard (non demandé)
+    mov    rdi, fmt_init_circles
     movzx  rsi, r14b
     movzx  rdx, word[pre_circles_x+r14*WORD]
     movzx  rcx, word[pre_circles_y+r14*WORD]
@@ -221,13 +242,157 @@ boucle_affichage:
     call   printf
 
     inc    byte[i]
-    cmp    byte[i], NB_PRE_CIRCLES-1
-    jb     boucle_cercles
+    cmp    byte[i], NB_PRE_CIRCLES
+    jb     boucle_cercles_initiaux
+    
+    mov rdi, crlf
+    mov rax, 0
+    call printf
+    
 
+; ETAPE 2
+mov byte[i], 0
+boucle_cercles_tangents:
+    ; génère les cercles tangents
+    mov r14b, byte[i]
+    mov rdi, WIDTH
+    call random_number
+    mov r10w, ax ; stocke le x aléatoire dans r10w
+    
+    mov rdi, HEIGHT
+    call random_number
+    mov r11w, ax ; stocke le y aléatoire dans r11w
+    
+    ;mov rdi, RAYON_MAX
+    ;call random_number
+    mov r12w, 0 ; on place un point
+    
+    mov cx, r12w
+    mov word[post_circles_r+r14*WORD], r12w
+    
+    mov bx, r10w
+    mov word[post_circles_x+r14*WORD], bx
+    
+    mov bx, cx
+    movzx rcx, bx
+    
+    mov bx, r11w
+    mov word[post_circles_y+r14*WORD], bx
+    
+    mov r13, 0
+    
+boucle_verif_post_restrictions_init:
+    ; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
+    cmp r13, r14
+    je next_post_init
+
+    movzx edi, word[pre_circles_x+r13*WORD]
+    movzx esi, word[pre_circles_y+r13*WORD]
+    movzx edx, word[post_circles_x+r14*WORD]
+    movzx r8d, word[post_circles_y+r14*WORD]
+    
+    call points_gap
+    
+    movzx r10, word[post_circles_x+r13*WORD]
+    movzx r11, word[post_circles_y+r13*WORD]
+    add r10, r11
+    
+    cmp rax, r10
+    
+    jl boucle_cercles_tangents
+    
+next_post_init:
+    inc r13
+    cmp r13, NB_PRE_CIRCLES
+    jb boucle_verif_post_restrictions_init
+    
+mov r13, 0 
+
+boucle_verif_post_restrictions_tan:
+    ; vérifie que le cercle ne chevauche pas un cercle tangent (mais permet la tangence)
+    cmp r13, r14
+    je next_post_tan
+    
+    movzx edi, word[post_circles_x+r13*WORD]
+    movzx esi, word[post_circles_y+r13*WORD]
+    movzx edx, word[post_circles_x+r14*WORD]
+    movzx r8d, word[post_circles_y+r14*WORD]
+    
+    call points_gap
+    
+    movzx r10, word[post_circles_r+r13*WORD]
+    movzx r11, word[post_circles_r+r14*WORD]
+    add r10, r11
+    
+    cmp rax, r10
+    jl boucle_cercles_tangents
+
+next_post_tan:
+    inc r13
+    cmp r13, NB_POST_CIRCLES
+    jb boucle_verif_post_restrictions_tan
+    
+; recherche de la distance max (pythagore)
+;movss xmm0, [WIDTH]
+;movss xmm1, [HEIGHT]
+
+;mulss xmm0, xmm0     ; WIDTH * WIDTH
+;mulss xmm1, xmm1     ; HEIGHT * HEIGHT
+
+;addss xmm0, xmm1     ; WIDTH^2 + HEIGHT^2
+;sqrtss xmm0, xmm0    ; racine_carree(WIDTH^2 + HEIGHT^2)
+
+;cvttss2si eax, xmm0 
+    
+;mov word[dist_max], ax
+    
+boucle_cercle_proche:
+    
+    boucle_cp_init:
+    
+    mov    rdi, qword[display_name]
+    mov    rsi, qword[window]
+    mov    rdx, qword[gc]
+    mov    cx, word[pre_circles_r+r14*WORD]
+
+    mov    bx, word[post_circles_x+r14*WORD]
+    sub    bx, cx
+    movzx  rcx, bx
+
+    mov    bx, word[post_circles_y+r14*WORD]
+    mov    r15w, word[post_circles_r+r14*WORD]
+    sub    bx, r15w
+    movzx  r8, bx
+    movzx  r9, r12w
+    shl    r9, 1
+    mov    rax, 23040
+    push   rax
+    push   0
+    push   r9
+
+    call   XDrawArc
+
+; FIN ETAPE 2
+
+boucle_affichage_post:
+    ; affichage dans la sortie standard (non demandé)
+    mov    rdi, fmt_tan_circles
+    movzx  rsi, r14b
+    movzx  rdx, word[post_circles_x+r14*WORD]
+    movzx  rcx, word[post_circles_y+r14*WORD]
+    movzx  r8, word[post_circles_r+r14*WORD]
+    mov    rax, 0
+    call   printf
+
+    inc    byte[i]
+    cmp    byte[i], NB_POST_CIRCLES
+    jb     boucle_cercles_tangents
+
+    
 flush:
     mov    rdi, qword[display_name]
     call   XFlush
-    jmp    boucle
+    ;jmp    boucle
     mov    rax, 34
     syscall
 
