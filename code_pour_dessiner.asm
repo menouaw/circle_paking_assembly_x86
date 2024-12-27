@@ -36,7 +36,7 @@ extern    exit
 %define    RAYON_MAX             300
 
 %define    NB_PRE_CIRCLES        3
-%define    NB_POST_CIRCLES       5
+%define    NB_POST_CIRCLES       1
 
 global    main
 
@@ -64,7 +64,9 @@ post_circles_x:  times    NB_POST_CIRCLES dw 0
 post_circles_y:  times    NB_POST_CIRCLES dw 0
 post_circles_r:  times    NB_POST_CIRCLES dw 0
 
-dist_max: dw 0
+dist_min: dw 0
+ind_closest_init: dw 0
+ind_closest_tan: dw 0
 
 fmt_init_circles:          db       "Cercle initial %d : x = %d, y = %d, r = %d", 10, 0
 fmt_tan_circles:          db       "Cercle tangent %d : x = %d, y = %d, r = %d", 10, 0
@@ -206,28 +208,29 @@ next_pre:
     inc    r13
     cmp    r13, NB_PRE_CIRCLES
     jb     boucle_verif_pre_restrictions
+    
+    generate_circle_step_one:
+        mov    rdi, qword[display_name]
+        mov    rsi, qword[window]
+        mov    rdx, qword[gc]
+        mov    cx, word[pre_circles_r+r14*WORD]
 
-    mov    rdi, qword[display_name]
-    mov    rsi, qword[window]
-    mov    rdx, qword[gc]
-    mov    cx, word[pre_circles_r+r14*WORD]
+        mov    bx, word[pre_circles_x+r14*WORD]
+        sub    bx, cx
+        movzx  rcx, bx
 
-    mov    bx, word[pre_circles_x+r14*WORD]
-    sub    bx, cx
-    movzx  rcx, bx
+        mov    bx, word[pre_circles_y+r14*WORD]
+        mov    r15w, word[pre_circles_r+r14*WORD]
+        sub    bx, r15w
+        movzx  r8, bx
+        movzx  r9, r12w
+        shl    r9, 1
+        mov    rax, 23040
+        push   rax
+        push   0
+        push   r9
 
-    mov    bx, word[pre_circles_y+r14*WORD]
-    mov    r15w, word[pre_circles_r+r14*WORD]
-    sub    bx, r15w
-    movzx  r8, bx
-    movzx  r9, r12w
-    shl    r9, 1
-    mov    rax, 23040
-    push   rax
-    push   0
-    push   r9
-
-    call   XDrawArc
+        call   XDrawArc
     
 ; FIN ETAPE 1
 
@@ -265,7 +268,7 @@ boucle_cercles_tangents:
     
     ;mov rdi, RAYON_MAX
     ;call random_number
-    mov r12w, 0 ; on place un point
+    mov r12w, 10 ; on place un point
     
     mov cx, r12w
     mov word[post_circles_r+r14*WORD], r12w
@@ -283,8 +286,6 @@ boucle_cercles_tangents:
     
 boucle_verif_post_restrictions_init:
     ; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
-    cmp r13, r14
-    je next_post_init
 
     movzx edi, word[pre_circles_x+r13*WORD]
     movzx esi, word[pre_circles_y+r13*WORD]
@@ -332,7 +333,7 @@ next_post_tan:
     cmp r13, NB_POST_CIRCLES
     jb boucle_verif_post_restrictions_tan
     
-; recherche de la distance max (pythagore)
+; recherche de la distance max (pythagore)(/!\ on annule, perte de temps /!\)
 ;movss xmm0, [WIDTH]
 ;movss xmm1, [HEIGHT]
 
@@ -344,33 +345,88 @@ next_post_tan:
 
 ;cvttss2si eax, xmm0 
     
-;mov word[dist_max], ax
+;mov word[dist_min], ax
     
+mov word[dist_min], 0
 boucle_cercle_proche:
-    
+    ; on cherche le cercle le plus proche
+    mov r13, 0
     boucle_cp_init:
+        movzx edi, word[post_circles_x+r14*WORD]
+        movzx esi, word[post_circles_y+r14*WORD]
+        movzx edx, word[pre_circles_x+r13*WORD]
+        movzx r8d, word[pre_circles_y+r13*WORD]
+        
+        call points_gap
+        
+        cmp ax, word[dist_min]
+        ja next_cp_init
+        
+        mov word[dist_min], ax
+        mov word[ind_closest_init], r13w
+        
+        next_cp_init:
+            inc r13
+            cmp r13, NB_PRE_CIRCLES
+            jb boucle_cp_init
+        
+    movzx r8, word[dist_min]
+    mov r13, 0
+    boucle_cp_tan:
+        cmp r13, r14
+        je next_cp_tan
+            
+        movzx edi, word[post_circles_x+r14*WORD]
+        movzx esi, word[post_circles_y+r14*WORD]
+        movzx edx, word[post_circles_x+r13*WORD]
+        movzx r8d, word[post_circles_y+r13*WORD]
+            
+        call points_gap
+        
+        cmp ax, word[dist_min]
+        ja next_cp_tan
+            
+        mov word[dist_min], ax
+        mov word[ind_closest_tan], r13w
+            
+        next_cp_tan:
+            inc r13
+            cmp r13, NB_POST_CIRCLES
+            jb boucle_cp_tan
+        
+    cmp word[dist_min], r8w ; r8w étant la distance minimum aux cercles initiaux
+    je case_cp_init
     
-    mov    rdi, qword[display_name]
-    mov    rsi, qword[window]
-    mov    rdx, qword[gc]
-    mov    cx, word[pre_circles_r+r14*WORD]
+    case_cp_init:
+        mov word[post_circles_r+r14*WORD], r8w
+        jmp generate_circle_step_two
+    
+    case_cp_tan:
+        mov r8w, word[dist_min]
+        mov word[post_circles_r+r14*WORD], r8w
+        
+    generate_circle_step_two:
+        mov    rdi, qword[display_name]
+        mov    rsi, qword[window]
+        mov    rdx, qword[gc]
+        mov    cx, word[post_circles_r+r14*WORD]
 
-    mov    bx, word[post_circles_x+r14*WORD]
-    sub    bx, cx
-    movzx  rcx, bx
+        mov    bx, word[post_circles_x+r14*WORD]
+        sub    bx, cx
+        movzx  rcx, bx
 
-    mov    bx, word[post_circles_y+r14*WORD]
-    mov    r15w, word[post_circles_r+r14*WORD]
-    sub    bx, r15w
-    movzx  r8, bx
-    movzx  r9, r12w
-    shl    r9, 1
-    mov    rax, 23040
-    push   rax
-    push   0
-    push   r9
+        mov    bx, word[post_circles_y+r14*WORD]
+        mov    r15w, word[post_circles_r+r14*WORD]
+        sub    bx, r15w
+        movzx  r8, bx
+        movzx  r9, r12w
+        shl    r9, 1
+        mov    rax, 23040
+        push   rax
+        push   0
+        push   r9
 
-    call   XDrawArc
+        call   XDrawArc
 
 ; FIN ETAPE 2
 
