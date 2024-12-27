@@ -149,7 +149,7 @@ boucle:                              ; boucle de gestion des évènements
 ;#        DEBUT DE LA ZONE DE DESSIN     #
 ;#########################################
 dessin:
-    ; itère le programme jusqu'à l'arrêt (appui sur une touche)
+    ; itère le programme jusqu'à l'arrêt
     mov    rdi, qword[display_name]
     mov    rsi, qword[gc]
     mov    edx, 0xFF0000            ; Couleur du crayon ; rouge
@@ -251,7 +251,6 @@ boucle_affichage_pre:
     mov rdi, crlf
     mov rax, 0
     call printf
-    
 
 ; ETAPE 2
 mov byte[i], 0
@@ -268,7 +267,7 @@ boucle_cercles_tangents:
     
     ;mov rdi, RAYON_MAX
     ;call random_number
-    mov r12w, 10 ; on place un point
+    mov r12w, 0 ; on place un point
     
     mov cx, r12w
     mov word[post_circles_r+r14*WORD], r12w
@@ -294,8 +293,8 @@ boucle_verif_post_restrictions_init:
     
     call points_gap
     
-    movzx r10, word[post_circles_x+r13*WORD]
-    movzx r11, word[post_circles_y+r13*WORD]
+    movzx r10, word[pre_circles_r+r13*WORD]
+    movzx r11, word[post_circles_r+r14*WORD]
     add r10, r11
     
     cmp rax, r10
@@ -347,7 +346,7 @@ next_post_tan:
     
 ;mov word[dist_min], ax
     
-mov word[dist_min], 0
+mov word[dist_min], RAYON_MAX
 boucle_cercle_proche:
     ; on cherche le cercle le plus proche
     mov r13, 0
@@ -420,7 +419,7 @@ boucle_cercle_proche:
         sub    bx, r15w
         movzx  r8, bx
         movzx  r9, r12w
-        shl    r9, 1
+        ;shl    r9, 1
         mov    rax, 23040
         push   rax
         push   0
