@@ -36,7 +36,7 @@ extern    exit
 %define    RAYON_MAX             300
 
 %define    NB_PRE_CIRCLES        3
-%define    NB_POST_CIRCLES       1
+%define    NB_POST_CIRCLES       2
 
 global    main
 
@@ -403,6 +403,8 @@ boucle_cercle_proche:
         mov ax, r8w
         mov r15w, word[ind_closest_init]
         sub ax, word[pre_circles_r+r15*WORD]
+        cmp ax, 0 ; vérifie que le rayon est positif
+        jle boucle_cercles_tangents
         mov word[post_circles_r+r14*WORD], ax
         jmp generate_circle_step_two
     
@@ -410,7 +412,9 @@ boucle_cercle_proche:
         mov ax, r8w
         mov r15w, word[ind_closest_tan]
         sub ax, word[post_circles_r+r15*WORD]
-        mov word[post_circles_r+r14*WORD], r8w
+        cmp ax, 0
+        jle boucle_cercles_tangents
+        mov word[post_circles_r+r14*WORD], ax
         
     generate_circle_step_two:
         mov    rdi, qword[display_name]
