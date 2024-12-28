@@ -34,12 +34,12 @@ extern    exit
 %define    WIDTH                  600
 %define    HEIGHT                 600
 
-%define    RAYON_CERCLE_EXTERNE  50
+%define    RAYON_CERCLE_EXTERNE  100
 
-%define    RAYON_MAX             RAYON_CERCLE_EXTERNE-1
+%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
-%define    NB_PRE_CIRCLES        10
-%define    NB_POST_CIRCLES       1
+%define    NB_PRE_CIRCLES        100
+%define    NB_POST_CIRCLES       100
 
 global    main
 
@@ -333,6 +333,22 @@ boucle_cercles_tangents:
     
     mov bx, r11w
     mov word[post_circles_y+r14*WORD], bx
+    
+boucle_verif_post_dans_ext:
+    ; vérifie que les cercles tangents se trouvent dans le cercle externe
+    movzx edi, word[post_circles_x+r14*WORD]
+    movzx esi, word[post_circles_y+r14*WORD]
+    movzx edx, word[ext_circle_x]
+    movzx ecx, word[ext_circle_y]
+    
+    call points_gap
+    
+    mov r10, 1 ; x, y du cercle (pathologique)
+    movzx r11, word[ext_circle_r]
+    add r10, r11
+    
+    cmp rax, r10
+    ja boucle_cercles_tangents
     
     
 mov r13, 0
