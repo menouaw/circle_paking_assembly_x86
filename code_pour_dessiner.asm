@@ -35,8 +35,8 @@ extern    exit
 %define    HEIGHT                 600
 %define    RAYON_MAX             300
 
-%define    NB_PRE_CIRCLES        3
-%define    NB_POST_CIRCLES       2
+%define    NB_PRE_CIRCLES        5
+%define    NB_POST_CIRCLES       1
 
 global    main
 
@@ -153,7 +153,7 @@ dessin:
     ; itère le programme jusqu'à l'arrêt
     mov    rdi, qword[display_name]
     mov    rsi, qword[gc]
-    mov    edx, 0xFF0000            ; Couleur du crayon ; rouge
+    mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
     call   XSetForeground
 
 ; ETAPE 1
@@ -171,6 +171,7 @@ boucle_cercles_initiaux:
     mov    rdi, RAYON_MAX
     call   random_number
     mov    r12w, ax
+    
     mov    cx, r12w
     mov    word[pre_circles_r+r14*WORD], r12w
 
@@ -232,6 +233,7 @@ next_pre:
         push   r9
 
         call   XDrawArc
+        add rsp, 24
     
 ; FIN ETAPE 1
 
@@ -330,22 +332,10 @@ boucle_verif_post_restrictions_tan:
 
 next_post_tan:
     inc r13
-    cmp r13, NB_POST_CIRCLES
+    
+    cmp r13, r14
     jb boucle_verif_post_restrictions_tan
     
-; recherche de la distance max (pythagore)(/!\ on annule, perte de temps /!\)
-;movss xmm0, [WIDTH]
-;movss xmm1, [HEIGHT]
-
-;mulss xmm0, xmm0     ; WIDTH * WIDTH
-;mulss xmm1, xmm1     ; HEIGHT * HEIGHT
-
-;addss xmm0, xmm1     ; WIDTH^2 + HEIGHT^2
-;sqrtss xmm0, xmm0    ; racine_carree(WIDTH^2 + HEIGHT^2)
-
-;cvttss2si eax, xmm0 
-    
-;mov word[dist_min], ax
     
 mov word[dist_min], RAYON_MAX
 boucle_cercle_proche:
@@ -416,6 +406,9 @@ boucle_cercle_proche:
         jle boucle_cercles_tangents
         mov word[post_circles_r+r14*WORD], ax
         
+    ;TODO ajouter une nouvelle vérif sur la tangence sur les cercles existants !
+        
+        
     generate_circle_step_two:
         mov    rdi, qword[display_name]
         mov    rsi, qword[window]
@@ -438,6 +431,7 @@ boucle_cercle_proche:
         push   r9
 
         call   XDrawArc
+        add rsp, 24
 
 ; FIN ETAPE 2
 
@@ -452,7 +446,7 @@ boucle_affichage_post:
     call   printf
 
     inc    byte[i]
-    cmp    byte[i], NB_POST_CIRCLES
+    cmp    byte[i], 5 ; TODO implémenter une valeur modulaire : NB_POST_CIRCLES
     jb     boucle_cercles_tangents
 
     
@@ -469,6 +463,7 @@ closeDisplay:
     call   XCloseDisplay
     xor    rdi, rdi
     call   exit
+    
 ; Fonction pour générer un nombre aléatoire
 ; random_number(rdi(nombre maximum))
 ; => rax(nombre aléatoire)
