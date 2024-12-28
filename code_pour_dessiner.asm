@@ -33,10 +33,13 @@ extern    exit
 
 %define    WIDTH                  600
 %define    HEIGHT                 600
-%define    RAYON_MAX             300
+
+%define    RAYON_CERCLE_EXTERNE  50
+
+%define    RAYON_MAX             RAYON_CERCLE_EXTERNE-1
 
 %define    NB_PRE_CIRCLES        10
-%define    NB_POST_CIRCLES       20
+%define    NB_POST_CIRCLES       1
 
 global    main
 
@@ -55,6 +58,10 @@ i:               resb    1
 
 section .data
 event:           times    24 dq 0
+
+ext_circle_x: dw 0
+ext_circle_y: dw 0
+ext_circle_r: dw 0
 
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
@@ -77,7 +84,7 @@ crlf:            db       10, 0
 
 section .text
 ;##################################################
-;########### PROGRAMME PRINCIPAL ###################
+;########### PROGRAMME PRINCIPAL ##################
 ;##################################################
 
 main:
@@ -158,6 +165,31 @@ dessin:
     mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
     call   XSetForeground
 
+; ETAPE 3
+
+    mov ax, WIDTH
+    shr ax, 1 ; divison par 2 via décalage de bits vers la droite
+    mov r10w, ax
+    
+    mov ax, HEIGHT
+    shr ax, 1
+    mov r11w, ax
+    
+    mov r12w, RAYON_CERCLE_EXTERNE
+    
+    mov cx, r12w
+    mov word[ext_circle_r], r12w
+    
+    mov bx, r10w
+    mov word[ext_circle_x], bx
+    
+    sub bx, cx
+    movzx rcx, bx
+    
+    mov bx, r11w
+    mov word[ext_circle_y], bx
+; FIN ETAPE 3
+    
 ; ETAPE 1
 mov    byte[i], 0
 boucle_cercles_initiaux:
@@ -187,7 +219,22 @@ boucle_cercles_initiaux:
     mov    bx, r11w
     mov    word[pre_circles_y+r14*WORD], bx
 
-
+boucle_verif_pre_dans_ext:
+    ; vérifie que les cercles initiaux se trouvent dans le cercle externe
+    movzx edi, word[pre_circles_x+r14*WORD]
+    movzx esi, word[pre_circles_y+r14*WORD]
+    movzx edx, word[ext_circle_x]
+    movzx ecx, word[ext_circle_y]
+    
+    call points_gap
+    
+    mov r10, 1 ; x, y du cercle
+    movzx r11, word[ext_circle_r]
+    add r10, r11
+    
+    cmp rax, r10
+    ja boucle_cercles_initiaux
+    
 mov    r13, 0
 boucle_verif_pre_restrictions:
     ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
@@ -342,7 +389,7 @@ next_post_tan:
 
 boucle_cercle_proche:
     ; on cherche le cercle le plus proche
-    mov word[dist_min], 30000 ; TODO À remplacer par une valeur modulaire
+    mov word[dist_min], RAYON_MAX
     
     mov r13, 0
     boucle_cp_init:
@@ -458,8 +505,6 @@ boucle_cercle_proche:
         movzx ecx, word[post_circles_y+r14*WORD]
         
         call points_gap
-        
-        
         
         movzx r10, word[post_circles_r+r13*WORD]
         movzx r11, word[post_circles_r+r14*WORD]
