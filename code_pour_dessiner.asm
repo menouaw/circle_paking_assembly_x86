@@ -35,7 +35,7 @@ extern    exit
 %define    HEIGHT                 600
 %define    RAYON_MAX             300
 
-%define    NB_PRE_CIRCLES        5
+%define    NB_PRE_CIRCLES        1
 %define    NB_POST_CIRCLES       1
 
 global    main
@@ -284,8 +284,8 @@ boucle_cercles_tangents:
     mov bx, r11w
     mov word[post_circles_y+r14*WORD], bx
     
-    mov r13, 0
     
+mov r13, 0
 boucle_verif_post_restrictions_init:
     ; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
 
@@ -310,7 +310,6 @@ next_post_init:
     jb boucle_verif_post_restrictions_init
     
 mov r13, 0 
-
 boucle_verif_post_restrictions_tan:
     ; vérifie que le cercle ne chevauche pas un cercle tangent (mais permet la tangence)
     cmp r13, r14
@@ -407,7 +406,52 @@ boucle_cercle_proche:
         mov word[post_circles_r+r14*WORD], ax
         
     ;TODO ajouter une nouvelle vérif sur la tangence sur les cercles existants !
+    mov r13, 0
+    boucle_verif_post_restrictions_init_2:
+        movzx edi, word[pre_circles_x+r13*WORD]
+        movzx esi, word[pre_circles_y+r13*WORD]
+        movzx edx, word[post_circles_x+r14*WORD]
+        movzx r8d, word[post_circles_y+r14*WORD]
         
+        call points_gap
+        
+        movzx r10, word[pre_circles_r+r13*WORD]
+        movzx r11, word[post_circles_r+r14*WORD]
+        add r10, r11
+        
+        cmp rax, r10
+        
+        jl boucle_cercles_tangents
+    
+    next_post_init_2:
+        inc r13
+        cmp r13, NB_PRE_CIRCLES
+        jb boucle_verif_post_restrictions_init_2
+        
+    ;mov r13, 0
+    ;boucle_verif_post_restrictions_tan_2:
+        ;cmp r13, r14
+        ;je next_post_tan_2
+        
+        ;movzx edi, word[post_circles_x+r13*WORD]
+        ;movzx esi, word[post_circles_y+r13*WORD]
+        ;movzx edx, word[post_circles_x+r14*WORD]
+        ;movzx r8d, word[post_circles_y+r14*WORD]
+        
+        ;call points_gap
+        
+        ;movzx r10, word[post_circles_r+r13*WORD]
+        ;movzx r11, word[post_circles_r+r14*WORD]
+        ;add r10, r11
+        
+        ;cmp rax, r10
+        ;jl boucle_cercles_tangents
+        
+    ;next_post_tan_2:
+        ;inc r13
+        
+        ;cmp r13, r14
+        ;jb boucle_verif_post_restrictions_tan_2
         
     generate_circle_step_two:
         mov    rdi, qword[display_name]
@@ -446,7 +490,7 @@ boucle_affichage_post:
     call   printf
 
     inc    byte[i]
-    cmp    byte[i], 5 ; TODO implémenter une valeur modulaire : NB_POST_CIRCLES
+    cmp    byte[i], 1 ; TODO implémenter une valeur modulaire : NB_POST_CIRCLES
     jb     boucle_cercles_tangents
 
     
@@ -481,15 +525,23 @@ valide:
 ; points_gap(edi(x1), esi(y1), edx(x2), r8d(y2))
 ; => rax(distance)
 points_gap:
-    ; Calculer (x1 - x2)^2
+    ; Calculer abs(x1 - x2)^2
     mov     eax, edi
     sub     eax, edx
+    mov     ebx, eax
+    neg     ebx
+    cmovl   eax, ebx    ; prend la valeur absolue
     imul    eax, eax
+    jo boucle
 
-    ; Calculer (y1 - y2)^2
+    ; Calculer abs(y1 - y2)^2
     mov     ebx, esi
     sub     ebx, r8d
+    mov     ecx, ebx
+    neg     ecx
+    cmovl   ebx, ecx
     imul    ebx, ebx
+    jo boucle
 
     ; Calculer (x1 - x2)^2 + (y1 - y2)^2
     add     eax, ebx
