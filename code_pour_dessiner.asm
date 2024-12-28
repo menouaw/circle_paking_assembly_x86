@@ -68,6 +68,8 @@ dist_min: dw 0
 ind_closest_init: dw 0
 ind_closest_tan: dw 0
 
+fmt_debug: db "Debug: %d", 10, 0
+
 fmt_init_circles:          db       "Cercle initial %d : x = %d, y = %d, r = %d", 10, 0
 fmt_tan_circles:          db       "Cercle tangent %d : x = %d, y = %d, r = %d", 10, 0
 
@@ -337,130 +339,137 @@ next_post_tan:
     cmp r13, r14
     jb boucle_verif_post_restrictions_tan
     
+
+boucle_cercle_proche:
+    ; on cherche le cercle le plus proche
+    mov word[dist_min], 30000 ; TODO À remplacer par une valeur modulaire
     
-;mov word[dist_min], RAYON_MAX
-;boucle_cercle_proche:
-    ;; on cherche le cercle le plus proche
-    ;mov r13, 0
-    ;boucle_cp_init:
-        ;movzx edi, word[post_circles_x+r14*WORD]
-        ;movzx esi, word[post_circles_y+r14*WORD]
-        ;movzx edx, word[pre_circles_x+r13*WORD]
-        ;movzx ecx, word[pre_circles_y+r13*WORD]
+    mov r13, 0
+    boucle_cp_init:
+        ; parmi les cercles initiaux
+        movzx edi, word[post_circles_x+r14*WORD]
+        movzx esi, word[post_circles_y+r14*WORD]
+        movzx edx, word[pre_circles_x+r13*WORD]
+        movzx ecx, word[pre_circles_y+r13*WORD]
         
-        ;call points_gap
+        call points_gap
         
-        ;cmp ax, word[dist_min]
-        ;ja next_cp_init
+        cmp ax, word[dist_min]
+        ja next_cp_init
         
-        ;mov word[dist_min], ax
-        ;mov word[ind_closest_init], r13w
+        mov word[dist_min], ax
+        mov word[ind_closest_init], r13w
         
-        ;next_cp_init:
-            ;inc r13
-            ;cmp r13, NB_PRE_CIRCLES
-            ;jb boucle_cp_init
+        next_cp_init:
+            inc r13
+            cmp r13, NB_PRE_CIRCLES
+            jb boucle_cp_init
         
-    ;movzx r8, word[dist_min]
-    ;mov r13, 0
-    ;boucle_cp_tan:
-        ;cmp r13, r14
-        ;je next_cp_tan
+    movzx r8, word[dist_min]
+    mov r13, 0
+    boucle_cp_tan:
+        cmp r13, r14
+        je next_cp_tan
             
-        ;movzx edi, word[post_circles_x+r14*WORD]
-        ;movzx esi, word[post_circles_y+r14*WORD]
-        ;movzx edx, word[post_circles_x+r13*WORD]
-        ;movzx ecx, word[post_circles_y+r13*WORD]
+        movzx edi, word[post_circles_x+r14*WORD]
+        movzx esi, word[post_circles_y+r14*WORD]
+        movzx edx, word[post_circles_x+r13*WORD]
+        movzx ecx, word[post_circles_y+r13*WORD]
             
-        ;call points_gap
+        call points_gap
         
-        ;cmp ax, word[dist_min]
-        ;ja next_cp_tan
+        cmp ax, word[dist_min]
+        ja next_cp_tan
             
-        ;mov word[dist_min], ax
-        ;mov word[ind_closest_tan], r13w
+        mov word[dist_min], ax
+        mov word[ind_closest_tan], r13w
             
-        ;next_cp_tan:
-            ;inc r13
-            ;cmp r13, NB_POST_CIRCLES
-            ;jb boucle_cp_tan
+        next_cp_tan:
+            inc r13
+            cmp r13, NB_POST_CIRCLES
+            jb boucle_cp_tan
         
-    ;cmp word[dist_min], r8w ; r8w étant la distance minimum aux cercles initiaux
-    ;je case_cp_init
-    ;jmp case_cp_tan
+    cmp word[dist_min], r8w
     
-    ;case_cp_init:
-        ;; new_circle_r = dist_min - closest_circle_r
-        ;mov ax, r8w
-        ;mov r15w, word[ind_closest_init]
-        ;sub ax, word[pre_circles_r+r15*WORD]
-        ;cmp ax, 0 ; vérifie que le rayon est positif
-        ;jle boucle_verif_post_restrictions_tan
-        
-        ;mov ax, r8w
-        ;movzx ebx, word[pre_circles_r+r15*WORD]
-        ;add ebx, eax
-        ;cmp ebx, RAYON_MAX
-        ;ja boucle_verif_post_restrictions_tan
-        
-        ;mov word[post_circles_r+r14*WORD], bx
-        ;jmp generate_circle_step_two
+    ;mov rdi, fmt_debug
+    ;movzx rsi, r8w
+    ;mov rax, 0
+    ;call printf
+    ;mov rdi, fmt_debug
+    ;movzx rsi, word[dist_min] 
+    ;mov rax, 0
+    ;call printf
     
-    ;case_cp_tan:
-        ;mov ax, r8w
-        ;mov r15w, word[ind_closest_tan]
-        ;sub ax, word[post_circles_r+r15*WORD]
-        ;cmp ax, 0
-        ;jle boucle_cercles_tangents
-        ;mov word[post_circles_r+r14*WORD], ax
-        
-    ;;TODO ajouter une nouvelle vérif sur la tangence sur les cercles existants !
-    ;mov r13, 0
-    ;boucle_verif_post_restrictions_init_2:
-        ;movzx edi, word[pre_circles_x+r13*WORD]
-        ;movzx esi, word[pre_circles_y+r13*WORD]
-        ;movzx edx, word[post_circles_x+r14*WORD]
-        ;movzx ecx, word[post_circles_y+r14*WORD]
-        
-        ;call points_gap
-        
-        ;movzx r10, word[pre_circles_r+r13*WORD]
-        ;movzx r11, word[post_circles_r+r14*WORD]
-        ;add r10, r11
-        
-        ;cmp rax, r10
-        
-        ;jl boucle_cercles_tangents
+    je case_cp_init
+    jne case_cp_tan
     
-    ;next_post_init_2:
-        ;inc r13
-        ;cmp r13, NB_PRE_CIRCLES
-        ;jb boucle_verif_post_restrictions_init_2
+    case_cp_init:
+        ; new_circle_r = dist_min - closest_circle_r
+        mov ax, r8w
+        mov r15w, word[ind_closest_init]
+        sub ax, word[pre_circles_r+r15*WORD]
+        cmp ax, 0 ; vérifie que le rayon est positif
+        jle boucle_verif_post_restrictions_tan
         
-    ;;mov r13, 0
-    ;;boucle_verif_post_restrictions_tan_2:
-        ;;cmp r13, r14
-        ;;je next_post_tan_2
+        mov word[post_circles_r+r14*WORD], ax
+        jmp generate_circle_step_two
+    
+    case_cp_tan:
+        mov ax, r8w
+        mov r15w, word[ind_closest_tan]
+        sub ax, word[post_circles_r+r15*WORD]
+        cmp ax, 0
+        jle boucle_verif_post_restrictions_tan
         
-        ;;movzx edi, word[post_circles_x+r13*WORD]
-        ;;movzx esi, word[post_circles_y+r13*WORD]
-        ;;movzx edx, word[post_circles_x+r14*WORD]
-        ;;movzx ecx, word[post_circles_y+r14*WORD]
+        mov word[post_circles_r+r14*WORD], ax
         
-        ;;call points_gap
+    ;TODO ajouter une nouvelle vérif sur la tangence sur les cercles existants !
+    mov r13, 0
+    boucle_verif_post_restrictions_init_2:
+        movzx edi, word[pre_circles_x+r13*WORD]
+        movzx esi, word[pre_circles_y+r13*WORD]
+        movzx edx, word[post_circles_x+r14*WORD]
+        movzx ecx, word[post_circles_y+r14*WORD]
         
-        ;;movzx r10, word[post_circles_r+r13*WORD]
-        ;;movzx r11, word[post_circles_r+r14*WORD]
-        ;;add r10, r11
+        call points_gap
         
-        ;;cmp rax, r10
-        ;;jl boucle_cercles_tangents
+        movzx r10, word[pre_circles_r+r13*WORD]
+        movzx r11, word[post_circles_r+r14*WORD]
+        add r10, r11
         
-    ;;next_post_tan_2:
-        ;;inc r13
+        cmp rax, r10
         
-        ;;cmp r13, r14
-        ;;jb boucle_verif_post_restrictions_tan_2
+        jl boucle_cercles_tangents
+    
+    next_post_init_2:
+        inc r13
+        cmp r13, NB_PRE_CIRCLES
+        jb boucle_verif_post_restrictions_init_2
+        
+    mov r13, 0
+    boucle_verif_post_restrictions_tan_2:
+        cmp r13, r14
+        je next_post_tan_2
+        
+        movzx edi, word[post_circles_x+r13*WORD]
+        movzx esi, word[post_circles_y+r13*WORD]
+        movzx edx, word[post_circles_x+r14*WORD]
+        movzx ecx, word[post_circles_y+r14*WORD]
+        
+        call points_gap
+        
+        movzx r10, word[post_circles_r+r13*WORD]
+        movzx r11, word[post_circles_r+r14*WORD]
+        add r10, r11
+        
+        cmp rax, r10
+        jl boucle_cercles_tangents
+        
+    next_post_tan_2:
+        inc r13
+        
+        cmp r13, r14
+        jb boucle_verif_post_restrictions_tan_2
         
     generate_circle_step_two:
         mov    rdi, qword[display_name]
