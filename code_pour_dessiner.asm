@@ -35,8 +35,8 @@ extern    exit
 %define    HEIGHT                 600
 %define    RAYON_MAX             300
 
-%define    NB_PRE_CIRCLES        5
-%define    NB_POST_CIRCLES       1
+%define    NB_PRE_CIRCLES        2
+%define    NB_POST_CIRCLES       3
 
 global    main
 
@@ -185,8 +185,8 @@ boucle_cercles_initiaux:
     mov    bx, r11w
     mov    word[pre_circles_y+r14*WORD], bx
 
-    mov    r13, 0
 
+mov    r13, 0
 boucle_verif_pre_restrictions:
     ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
     cmp    r13, r14
@@ -195,7 +195,7 @@ boucle_verif_pre_restrictions:
     movzx  edi, word[pre_circles_x+r14*WORD]
     movzx  esi, word[pre_circles_y+r14*WORD]
     movzx  edx, word[pre_circles_x+r13*WORD]
-    movzx  r8d, word[pre_circles_y+r13*WORD]
+    movzx  ecx, word[pre_circles_y+r13*WORD]
 
     call   points_gap
 
@@ -216,8 +216,8 @@ next_pre:
         mov    rdi, qword[display_name]
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
+        
         mov    cx, word[pre_circles_r+r14*WORD]
-
         mov    bx, word[pre_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
@@ -234,7 +234,6 @@ next_pre:
         push   r9
 
         call   XDrawArc
-        add rsp, 24
     
 ; FIN ETAPE 1
 
@@ -258,45 +257,46 @@ boucle_incrementation_compteur_init:
     call printf
 
 ; ETAPE 2
-;mov byte[i], 0
-;boucle_cercles_tangents:
-    ;; génère les cercles tangents
-    ;mov r14b, byte[i]
-    ;mov rdi, WIDTH
+mov byte[i], 0
+boucle_cercles_tangents:
+    ; génère les cercles tangents
+    mov r14b, byte[i]
+    mov rdi, WIDTH
+    call random_number
+    mov r10w, ax ; stocke le x aléatoire dans r10w
+    
+    mov rdi, HEIGHT
+    call random_number
+    mov r11w, ax ; stocke le y aléatoire dans r11w
+    
+    ;mov rdi, RAYON_MAX
     ;call random_number
-    ;mov r10w, ax ; stocke le x aléatoire dans r10w
+    mov r12w, 1 ; on place un point
     
-    ;mov rdi, HEIGHT
-    ;call random_number
-    ;mov r11w, ax ; stocke le y aléatoire dans r11w
+    mov cx, r12w
+    mov word[post_circles_r+r14*WORD], r12w
     
-    ;;mov rdi, RAYON_MAX
-    ;;call random_number
-    ;mov r12w, 0 ; on place un point
+    mov bx, r10w
+    mov word[post_circles_x+r14*WORD], bx
     
-    ;mov cx, r12w
-    ;mov word[post_circles_r+r14*WORD], r12w
+    mov bx, cx
+    movzx rcx, bx
     
-    ;mov bx, r10w
-    ;mov word[post_circles_x+r14*WORD], bx
-    
-    ;mov bx, cx
-    ;movzx rcx, bx
-    
-    ;mov bx, r11w
-    ;mov word[post_circles_y+r14*WORD], bx
+    mov bx, r11w
+    mov word[post_circles_y+r14*WORD], bx
     
     
-;mov r13, 0
-;boucle_verif_post_restrictions_init:
-    ;; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
+mov r13, 0
+boucle_verif_post_restrictions_init:
+    ; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
 
-    ;movzx edi, word[pre_circles_x+r13*WORD]
-    ;movzx esi, word[pre_circles_y+r13*WORD]
-    ;movzx edx, word[post_circles_x+r14*WORD]
-    ;movzx r8d, word[post_circles_y+r14*WORD]
+    movzx edi, word[pre_circles_x+r13*WORD]
+    movzx esi, word[pre_circles_y+r13*WORD]
+    movzx edx, word[post_circles_x+r14*WORD]
+    movzx ecx, word[post_circles_y+r14*WORD]
     
-    ;call points_gap
+    call points_gap
+    
     
     ;movzx r10, word[pre_circles_r+r13*WORD]
     ;movzx r11, word[post_circles_r+r14*WORD]
@@ -320,7 +320,7 @@ boucle_incrementation_compteur_init:
     ;movzx edi, word[post_circles_x+r13*WORD]
     ;movzx esi, word[post_circles_y+r13*WORD]
     ;movzx edx, word[post_circles_x+r14*WORD]
-    ;movzx r8d, word[post_circles_y+r14*WORD]
+    ;movzx ecx, word[post_circles_y+r14*WORD]
     
     ;call points_gap
     
@@ -346,7 +346,7 @@ boucle_incrementation_compteur_init:
         ;movzx edi, word[post_circles_x+r14*WORD]
         ;movzx esi, word[post_circles_y+r14*WORD]
         ;movzx edx, word[pre_circles_x+r13*WORD]
-        ;movzx r8d, word[pre_circles_y+r13*WORD]
+        ;movzx ecx, word[pre_circles_y+r13*WORD]
         
         ;call points_gap
         
@@ -370,7 +370,7 @@ boucle_incrementation_compteur_init:
         ;movzx edi, word[post_circles_x+r14*WORD]
         ;movzx esi, word[post_circles_y+r14*WORD]
         ;movzx edx, word[post_circles_x+r13*WORD]
-        ;movzx r8d, word[post_circles_y+r13*WORD]
+        ;movzx ecx, word[post_circles_y+r13*WORD]
             
         ;call points_gap
         
@@ -420,7 +420,7 @@ boucle_incrementation_compteur_init:
         ;movzx edi, word[pre_circles_x+r13*WORD]
         ;movzx esi, word[pre_circles_y+r13*WORD]
         ;movzx edx, word[post_circles_x+r14*WORD]
-        ;movzx r8d, word[post_circles_y+r14*WORD]
+        ;movzx ecx, word[post_circles_y+r14*WORD]
         
         ;call points_gap
         
@@ -445,7 +445,7 @@ boucle_incrementation_compteur_init:
         ;;movzx edi, word[post_circles_x+r13*WORD]
         ;;movzx esi, word[post_circles_y+r13*WORD]
         ;;movzx edx, word[post_circles_x+r14*WORD]
-        ;;movzx r8d, word[post_circles_y+r14*WORD]
+        ;;movzx ecx, word[post_circles_y+r14*WORD]
         
         ;;call points_gap
         
@@ -462,51 +462,50 @@ boucle_incrementation_compteur_init:
         ;;cmp r13, r14
         ;;jb boucle_verif_post_restrictions_tan_2
         
-    ;generate_circle_step_two:
-        ;mov    rdi, qword[display_name]
-        ;mov    rsi, qword[window]
-        ;mov    rdx, qword[gc]
-        ;mov    cx, word[post_circles_r+r14*WORD]
+    generate_circle_step_two:
+        mov    rdi, qword[display_name]
+        mov    rsi, qword[window]
+        mov    rdx, qword[gc]
+        mov    cx, word[post_circles_r+r14*WORD]
 
-        ;mov    bx, word[post_circles_x+r14*WORD]
-        ;sub    bx, cx
-        ;movzx  rcx, bx
+        mov    bx, word[post_circles_x+r14*WORD]
+        sub    bx, cx
+        movzx  rcx, bx
 
-        ;mov    bx, word[post_circles_y+r14*WORD]
-        ;mov    r15w, word[post_circles_r+r14*WORD]
-        ;sub    bx, r15w
-        ;movzx  r8, bx
-        ;movzx  r9, word[post_circles_r+r14*WORD]
-        ;shl    r9, 1
-        ;mov    rax, 23040
-        ;push   rax
-        ;push   0
-        ;push   r9
+        mov    bx, word[post_circles_y+r14*WORD]
+        mov    r15w, word[post_circles_r+r14*WORD]
+        sub    bx, r15w
+        movzx  r8, bx
+        movzx  r9, word[post_circles_r+r14*WORD]
+        shl    r9, 1
+        mov    rax, 23040
+        push   rax
+        push   0
+        push   r9
 
-        ;call   XDrawArc
-        ;add rsp, 24
+        call   XDrawArc
 
-;; FIN ETAPE 2
+; FIN ETAPE 2
 
-;boucle_affichage_post:
-    ;; affichage dans la sortie standard (non demandé)
-    ;mov    rdi, fmt_tan_circles
-    ;movzx  rsi, r14b
-    ;movzx  rdx, word[post_circles_x+r14*WORD]
-    ;movzx  rcx, word[post_circles_y+r14*WORD]
-    ;movzx  r8, word[post_circles_r+r14*WORD]
-    ;mov    rax, 0
-    ;call   printf
+boucle_affichage_post:
+    ; affichage dans la sortie standard (non demandé)
+    mov    rdi, fmt_tan_circles
+    movzx  rsi, r14b
+    movzx  rdx, word[post_circles_x+r14*WORD]
+    movzx  rcx, word[post_circles_y+r14*WORD]
+    movzx  r8, word[post_circles_r+r14*WORD]
+    mov    rax, 0
+    call   printf
 
-    ;inc    byte[i]
-    ;cmp    byte[i], 1 ; TODO implémenter une valeur modulaire : NB_POST_CIRCLES
-    ;jb     boucle_cercles_tangents
+    inc    byte[i]
+    cmp    byte[i], NB_POST_CIRCLES
+    jb     boucle_cercles_tangents
 
     
 flush:
     mov    rdi, qword[display_name]
     call   XFlush
-    ;jmp    boucle
+    ;jmp    boucle ; stand-by: ça cause divers problèmes
     mov    rax, 34
     syscall
 
@@ -531,7 +530,7 @@ valide:
     mov     ax, dx
     ret
 
-; points_gap(edi(x1), esi(y1), edx(x2), r8d(y2))
+; points_gap(edi(x1), esi(y1), edx(x2), ecx(y2))
 ; => rax(distance)
 points_gap:
     ; Calculer (x1 - x2)^2
@@ -541,7 +540,7 @@ points_gap:
 
     ; Calculer (y1 - y2)^2
     mov     ebx, esi
-    sub     ebx, r8d
+    sub     ebx, ecx
     imul    ebx, ebx
 
     ; Calculer (x1 - x2)^2 + (y1 - y2)^2
