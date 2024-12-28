@@ -298,44 +298,44 @@ boucle_verif_post_restrictions_init:
     call points_gap
     
     
-    ;movzx r10, word[pre_circles_r+r13*WORD]
-    ;movzx r11, word[post_circles_r+r14*WORD]
-    ;add r10, r11
+    movzx r10, word[pre_circles_r+r13*WORD]
+    movzx r11, word[post_circles_r+r14*WORD]
+    add r10, r11
     
-    ;cmp rax, r10
+    cmp rax, r10
     
-    ;jl boucle_cercles_tangents
+    jl boucle_cercles_tangents
     
-;next_post_init:
-    ;inc r13
-    ;cmp r13, NB_PRE_CIRCLES
-    ;jb boucle_verif_post_restrictions_init
+next_post_init:
+    inc r13
+    cmp r13, NB_PRE_CIRCLES
+    jb boucle_verif_post_restrictions_init
     
-;mov r13, 0 
-;boucle_verif_post_restrictions_tan:
-    ;; vérifie que le cercle ne chevauche pas un cercle tangent (mais permet la tangence)
-    ;cmp r13, r14
-    ;je next_post_tan
+mov r13, 0 
+boucle_verif_post_restrictions_tan:
+    ; vérifie que le cercle ne chevauche pas un cercle tangent (mais permet la tangence)
+    cmp r13, r14
+    je next_post_tan
     
-    ;movzx edi, word[post_circles_x+r13*WORD]
-    ;movzx esi, word[post_circles_y+r13*WORD]
-    ;movzx edx, word[post_circles_x+r14*WORD]
-    ;movzx ecx, word[post_circles_y+r14*WORD]
+    movzx edi, word[post_circles_x+r13*WORD]
+    movzx esi, word[post_circles_y+r13*WORD]
+    movzx edx, word[post_circles_x+r14*WORD]
+    movzx ecx, word[post_circles_y+r14*WORD]
     
-    ;call points_gap
+    call points_gap
     
-    ;movzx r10, word[post_circles_r+r13*WORD]
-    ;movzx r11, word[post_circles_r+r14*WORD]
-    ;add r10, r11
+    movzx r10, word[post_circles_r+r13*WORD]
+    movzx r11, word[post_circles_r+r14*WORD]
+    add r10, r11
     
-    ;cmp rax, r10
-    ;jl boucle_cercles_tangents
+    cmp rax, r10
+    jl boucle_cercles_tangents
 
-;next_post_tan:
-    ;inc r13
+next_post_tan:
+    inc r13
     
-    ;cmp r13, r14
-    ;jb boucle_verif_post_restrictions_tan
+    cmp r13, r14
+    jb boucle_verif_post_restrictions_tan
     
     
 ;mov word[dist_min], RAYON_MAX
