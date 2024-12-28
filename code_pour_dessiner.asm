@@ -35,8 +35,8 @@ extern    exit
 %define    HEIGHT                 600
 %define    RAYON_MAX             300
 
-%define    NB_PRE_CIRCLES        2
-%define    NB_POST_CIRCLES       3
+%define    NB_PRE_CIRCLES        10
+%define    NB_POST_CIRCLES       20
 
 global    main
 
@@ -412,7 +412,7 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
-        jmp generate_circle_step_two
+        jmp entry_point_boucle_verif_post_restrictions_init_2
     
     case_cp_tan:
         mov ax, r8w
@@ -422,8 +422,9 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
+        jmp entry_point_boucle_verif_post_restrictions_init_2
         
-    ;TODO ajouter une nouvelle vérif sur la tangence sur les cercles existants !
+    entry_point_boucle_verif_post_restrictions_init_2:
     mov r13, 0
     boucle_verif_post_restrictions_init_2:
         movzx edi, word[pre_circles_x+r13*WORD]
@@ -457,6 +458,8 @@ boucle_cercle_proche:
         movzx ecx, word[post_circles_y+r14*WORD]
         
         call points_gap
+        
+        
         
         movzx r10, word[post_circles_r+r13*WORD]
         movzx r11, word[post_circles_r+r14*WORD]
