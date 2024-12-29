@@ -38,8 +38,8 @@ extern    exit
 
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/2
 
-%define    NB_PRE_CIRCLES        10
-%define    NB_POST_CIRCLES       1
+%define    NB_PRE_CIRCLES        1
+%define    NB_POST_CIRCLES       2
 
 %define    NB_KIT_STEP           3
 
@@ -70,10 +70,12 @@ ext_circle_r: dw 0
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
 pre_circles_r:   times    NB_PRE_CIRCLES dw 0
+pre_circles_r_tampon: times NB_POST_CIRCLES dw 0
 
 post_circles_x:  times    NB_POST_CIRCLES dw 0
 post_circles_y:  times    NB_POST_CIRCLES dw 0
 post_circles_r:  times    NB_POST_CIRCLES dw 0
+post_circles_r_tampon: times NB_POST_CIRCLES dw 0
 
 dist_min: dw 0
 ind_closest_init: dw 0
@@ -231,6 +233,7 @@ boucle_cercles_initiaux:
     
     mov    cx, r12w
     mov    word[pre_circles_r+r14*WORD], r12w
+    mov    word[pre_circles_r_tampon+r14*WORD], r12w
 
     mov    bx, r10w
     mov    word[pre_circles_x+r14*WORD], bx
@@ -288,17 +291,17 @@ next_pre:
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
         
-        mov    cx, word[pre_circles_r+r14*WORD]
+        mov    cx, word[pre_circles_r_tampon+r14*WORD]
         mov    bx, word[pre_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
         
         
         mov    bx, word[pre_circles_y+r14*WORD]
-        mov    r15w, word[pre_circles_r+r14*WORD]
+        mov    r15w, word[pre_circles_r_tampon+r14*WORD]
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, word[pre_circles_r+r14*WORD]
+        movzx  r9, word[pre_circles_r_tampon+r14*WORD]
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -308,8 +311,7 @@ next_pre:
         call   XDrawArc
         
         pre_inner_arc:
-            ; TODO s'occuper de colorer les cercles
-            mov r15w, word[pre_circles_r+r14*WORD]
+            mov r15w, word[pre_circles_r_tampon+r14*WORD]
             cmp r15w, 0
             je boucle_affichage_pre
             
@@ -330,7 +332,7 @@ next_pre:
             mov edx, dword[kit_colors+r15*DWORD]
             call XSetForeground
             
-            dec word[pre_circles_r+r14*WORD]
+            dec word[pre_circles_r_tampon+r14*WORD]
             inc word[color_counter]
             jmp generate_circle_step_one
     
@@ -526,6 +528,7 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
+        mov word[post_circles_r_tampon+r14*WORD], ax
         jmp entry_point_boucle_verif_post_restrictions_init_2
     
     case_cp_tan:
@@ -536,6 +539,7 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
+        mov word[post_circles_r_tampon+r14*WORD], ax
         jmp entry_point_boucle_verif_post_restrictions_init_2
         
     entry_point_boucle_verif_post_restrictions_init_2:
@@ -590,17 +594,17 @@ boucle_cercle_proche:
         mov    rdi, qword[display_name]
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
-        mov    cx, word[post_circles_r+r14*WORD]
+        mov    cx, word[post_circles_r_tampon+r14*WORD]
 
         mov    bx, word[post_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
 
         mov    bx, word[post_circles_y+r14*WORD]
-        mov    r15w, word[post_circles_r+r14*WORD]
+        mov    r15w, word[post_circles_r_tampon+r14*WORD]
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, word[post_circles_r+r14*WORD]
+        movzx  r9, word[post_circles_r_tampon+r14*WORD]
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -610,7 +614,7 @@ boucle_cercle_proche:
         call   XDrawArc
         
         post_inner_arc:
-            mov r15w, word[post_circles_r+r14*WORD]
+            mov r15w, word[post_circles_r_tampon+r14*WORD]
             cmp r15w, 0
             je boucle_affichage_post
             
@@ -626,7 +630,7 @@ boucle_cercle_proche:
             mov edx, dword[kit_colors+r15*DWORD]
             call XSetForeground
             
-            dec word[post_circles_r+r14*WORD]
+            dec word[post_circles_r_tampon+r14*WORD]
             inc word[color_counter]
             jmp generate_circle_step_two
 
