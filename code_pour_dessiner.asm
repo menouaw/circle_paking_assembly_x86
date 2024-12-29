@@ -34,6 +34,7 @@ extern    exit
 %define    WORD                   2
 %define    BYTE                   1
 
+%define    BACKGROUND_COLOR       0xffc7e9
 %define    WIDTH                  600
 %define    HEIGHT                 600
 
@@ -42,9 +43,9 @@ extern    exit
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
 %define    NB_PRE_CIRCLES        250
-%define    NB_POST_CIRCLES       100 ; /!\ NE SEMBLE PAS SUPPORTER LES NOMBRES > 150 SUR MA MACHINE!
+%define    NB_POST_CIRCLES       100 ; /!\ Ne semble pas supporter au-delà de 150?
 
-%define    NB_KIT_STEP           10
+%define    NB_KIT_STEP           26
 
 global    main
 
@@ -59,7 +60,7 @@ window:          resq    1
 gc:              resq    1
 
 i:               resw    1
-color_counter    resw    1
+color_counter:    resw   1
 
 section .data
 event:           times    24 dq 0
@@ -68,21 +69,23 @@ ext_circle_x:    dw 0
 ext_circle_y:    dw 0
 ext_circle_r:    dw 0
 
-pre_circles_x:   times    NB_PRE_CIRCLES dw 0
-pre_circles_y:   times    NB_PRE_CIRCLES dw 0
-pre_circles_r:   times    NB_PRE_CIRCLES dw 0
-pre_circles_r_tampon: times NB_PRE_CIRCLES dw 0
+pre_circles_x:         times NB_PRE_CIRCLES dw 0
+pre_circles_y:         times NB_PRE_CIRCLES dw 0
+pre_circles_r:         times NB_PRE_CIRCLES dw 0
+pre_circles_r_tampon:  times NB_PRE_CIRCLES dw 0
 
-post_circles_x:  times    NB_POST_CIRCLES dw 0
-post_circles_y:  times    NB_POST_CIRCLES dw 0
-post_circles_r:  times    NB_POST_CIRCLES dw 0
+post_circles_x:        times NB_POST_CIRCLES dw 0
+post_circles_y:        times NB_POST_CIRCLES dw 0
+post_circles_r:        times NB_POST_CIRCLES dw 0
 post_circles_r_tampon: times NB_POST_CIRCLES dw 0
 
-dist_min:        dw 0
+dist_min:         dw 0
 ind_closest_init: dw 0
-ind_closest_tan: dw 0
+ind_closest_tan:  dw 0
 
 kit_colors:      times NB_KIT_STEP dd 0
+
+bool_fin:        db 0    
 
 fmt_debug:       db "Debug: %d", 10, 0
 fmt_debug_x:     db "Debug: %x", 10, 0
@@ -104,31 +107,37 @@ main:
     ; Remplissage des couleurs du kit
     ; palier 1
     mov dword[kit_colors+0*DWORD], 0x0ebeff
-
     ; palier 2
-    mov dword[kit_colors+1*DWORD], 0x29b0f7
-
-    ; palier 3
-    mov dword[kit_colors+2*DWORD], 0x44a2ee
+    mov dword[kit_colors+1*DWORD], 0x18b9fc
+    mov dword[kit_colors+2*DWORD], 0x21b4f9
+    mov dword[kit_colors+3*DWORD], 0x2baff6
+    mov dword[kit_colors+4*DWORD], 0x35aaf3
+    mov dword[kit_colors+5*DWORD], 0x3ea5f0
+    mov dword[kit_colors+6*DWORD], 0x48a0ed
+    mov dword[kit_colors+7*DWORD], 0x519bea
+    mov dword[kit_colors+8*DWORD], 0x5b96e7
+    mov dword[kit_colors+9*DWORD], 0x6591e4
+    mov dword[kit_colors+10*DWORD], 0x6e8ce1
+    mov dword[kit_colors+11*DWORD], 0x7887de
+    mov dword[kit_colors+12*DWORD], 0x8282db
+    mov dword[kit_colors+13*DWORD], 0x8b7ed7
+    mov dword[kit_colors+14*DWORD], 0x9579d4
+    mov dword[kit_colors+15*DWORD], 0x9f74d1
+    mov dword[kit_colors+16*DWORD], 0xa86fce
+    mov dword[kit_colors+17*DWORD], 0xb26acb
+    mov dword[kit_colors+18*DWORD], 0xbc65c8
+    mov dword[kit_colors+19*DWORD], 0xc560c5
+    mov dword[kit_colors+20*DWORD], 0xcf5bc2
+    mov dword[kit_colors+21*DWORD], 0xd856bf
+    mov dword[kit_colors+22*DWORD], 0xe251bc
+    mov dword[kit_colors+23*DWORD], 0xec4cb9
+    mov dword[kit_colors+24*DWORD], 0xf547b6
+    mov dword[kit_colors+25*DWORD], 0xff42b3
     
-    mov dword[kit_colors+3*DWORD], 0x5e95e6
-    
-    mov dword[kit_colors+4*DWORD], 0x7987dd
-    
-    mov dword[kit_colors+5*DWORD], 0x9479d5
-    
-    mov dword[kit_colors+6*DWORD], 0xaf6bcc
-    
-    mov dword[kit_colors+7*DWORD], 0xc95ec4
-    
-    mov dword[kit_colors+8*DWORD], 0xe450bb
-    
-    mov dword[kit_colors+9*DWORD], 0xff42b3
-    
-    mov rdi, fmt_debug_x
-    mov esi, dword[kit_colors+0*DWORD]
-    mov rax, 0
-    call printf
+    ;mov rdi, fmt_debug_x
+    ;mov esi, dword[kit_colors+0*DWORD]
+    ;mov rax, 0
+    ;call printf
 
     ;###############################
     ; Code de création de la fenêtre
@@ -154,7 +163,7 @@ main:
     mov    rcx, 10
     mov    r8, WIDTH
     mov    r9, HEIGHT
-    push   0xFFFFFF
+    push   BACKGROUND_COLOR
     push   0x00FF00
     push   1
     call   XCreateSimpleWindow
@@ -186,12 +195,16 @@ boucle:                              ; boucle de gestion des évènements
     mov    rdi, qword[display_name]
     mov    rsi, event
     call   XNextEvent
-
-    cmp    dword[event], ConfigureNotify
-    je     dessin
     
     cmp    dword[event], KeyPress
     je     closeDisplay
+    
+    cmp byte[bool_fin], 1 ; vérifie si le programme a déjà généré les cercles
+    je flush
+    
+    cmp    dword[event], ConfigureNotify
+    je     dessin
+    
     jmp    boucle
 
 ;#########################################
@@ -657,11 +670,14 @@ boucle_verif_post_restrictions_tan_2:
         inc    word[i]
         cmp    word[i], NB_POST_CIRCLES
         jb     boucle_cercles_tangents
+        
+    fin_affichage_cercles:
+        mov byte[bool_fin], 1
 
     flush:
         mov    rdi, qword[display_name]
         call   XFlush
-        ;jmp    boucle ; stand-by: ça cause divers problèmes
+        jmp    boucle ; stand-by: ça cause divers problèmes
         mov    rax, 34
         syscall
 
