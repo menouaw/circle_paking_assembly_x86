@@ -42,8 +42,8 @@ extern    exit
 
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
-%define    NB_PRE_CIRCLES        250
-%define    NB_POST_CIRCLES       100 ; /!\ Ne semble pas supporter au-delà de 150?
+%define    NB_PRE_CIRCLES        2500
+%define    NB_POST_CIRCLES       2500
 
 %define    NB_KIT_STEP           26
 
@@ -102,9 +102,9 @@ section .text
 
 main:
     ;###########################################################
-    ; Mettez ici votre code qui devra sexécuter avant le dessin
+    ; Mettez ici votre code qui devra s'exécuter avant le dessin
     ;###########################################################
-    ; Remplissage des couleurs du kit
+    ; remplissage des couleurs du kit
     ; palier 1
     mov dword[kit_colors+0*DWORD], 0x0ebeff
     ; palier 2
@@ -211,14 +211,9 @@ boucle:                              ; boucle de gestion des évènements
 ;#        DEBUT DE LA ZONE DE DESSIN     #
 ;#########################################
 dessin:
-    ; itère le programme jusqu'à l'arrêt
-    mov    rdi, qword[display_name]
-    mov    rsi, qword[gc]
-    mov    edx, dword[kit_colors+1*DWORD]      ; Couleur du crayon ; deuxième palier
-    call   XSetForeground
-
-    ; ETAPE 3
-
+    ; itère le programme jusqu'à ce que tous les cercles soit affichés
+    
+    ; ETAPE 3 ; cercle externe
     mov ax, WIDTH
     shr ax, 1 ; divison par 2 via décalage de bits vers la droite
     mov r10w, ax
@@ -242,7 +237,7 @@ dessin:
     mov word[ext_circle_y], bx
     ; FIN ETAPE 3
 
-    ; ETAPE 1
+    ; ETAPE 1 ; cercles initiaux
     mov    word[i], 0
     mov    word[color_counter], 0
 boucle_cercles_initiaux:
@@ -282,7 +277,7 @@ boucle_verif_pre_dans_ext:
 
     call points_gap
 
-    mov r10, 1 ; x, y du cercle
+    mov r10, 1 ; cercle sur le point x, y du cercle
     movzx r11, word[ext_circle_r]
     add r10, r11
 
@@ -345,9 +340,9 @@ pre_inner_arc:
     je boucle_affichage_pre
 
     mov ax, word[color_counter]
-    mov bx, NB_KIT_STEP ; div ne prend pas de valeur fixe
+    mov bx, NB_KIT_STEP
     xor dx, dx
-    div bx ; reste dans dx
+    div bx ; le reste est dans dx
 
     ;mov rdi, fmt_debug
     ;movzx rsi, dx
@@ -364,13 +359,12 @@ pre_inner_arc:
     dec word[pre_circles_r_tampon+r14*WORD]
     inc word[color_counter]
     jmp generate_circle_step_one
-
     ; FIN ETAPE 1
 
 boucle_affichage_pre:
-    ; affichage dans la sortie standard (non demandé)
+    ; affichage dans la sortie standard
     mov    rdi, fmt_init_circles
-    movzx  rsi, r14b
+    mov  rsi, r14
     movzx  rdx, word[pre_circles_x+r14*WORD]
     movzx  rcx, word[pre_circles_y+r14*WORD]
     movzx  r8, word[pre_circles_r+r14*WORD]
@@ -386,7 +380,7 @@ boucle_incrementation_compteur_init:
     mov rax, 0
     call printf
 
-    ; ETAPE 2
+    ; ETAPE 2 ; cercles tangents
     mov word[i], 0
     mov word[color_counter], 0
 boucle_cercles_tangents:
@@ -394,11 +388,11 @@ boucle_cercles_tangents:
     mov r14w, word[i]
     mov rdi, WIDTH
     call random_number
-    mov r10w, ax ; stocke le x aléatoire dans r10w
+    mov r10w, ax
 
     mov rdi, HEIGHT
     call random_number
-    mov r11w, ax ; stocke le y aléatoire dans r11w
+    mov r11w, ax
 
     ;mov rdi, RAYON_MAX
     ;call random_number
@@ -533,6 +527,7 @@ next_cp_tan:
     ;movzx rsi, r8w
     ;mov rax, 0
     ;call printf
+    
     ;mov rdi, fmt_debug
     ;movzx rsi, word[dist_min] 
     ;mov rax, 0
@@ -546,8 +541,8 @@ case_cp_init:
     mov ax, r8w
     mov r15w, word[ind_closest_init]
     sub ax, word[pre_circles_r+r15*WORD]
-    cmp ax, 0 ; vérifie que le rayon est positif
-    jle boucle_verif_post_restrictions_tan
+    cmp ax, 0 
+    jl boucle_verif_post_restrictions_tan ; vérifie que le rayon est positif
     
     mov word[post_circles_r+r14*WORD], ax
     mov word[post_circles_r_tampon+r14*WORD], ax
@@ -558,7 +553,7 @@ case_cp_tan:
     mov r15w, word[ind_closest_tan]
     sub ax, word[post_circles_r+r15*WORD]
     cmp ax, 0
-    jle boucle_verif_post_restrictions_tan
+    jl boucle_verif_post_restrictions_tan
     
     mov word[post_circles_r+r14*WORD], ax
     mov word[post_circles_r_tampon+r14*WORD], ax
@@ -660,7 +655,7 @@ boucle_verif_post_restrictions_tan_2:
     boucle_affichage_post:
         ; affichage dans la sortie standard (non demandé)
         mov    rdi, fmt_tan_circles
-        movzx  rsi, r14b
+        mov  rsi, r14
         movzx  rdx, word[post_circles_x+r14*WORD]
         movzx  rcx, word[post_circles_y+r14*WORD]
         movzx  r8, word[post_circles_r+r14*WORD]
