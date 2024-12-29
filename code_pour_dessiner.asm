@@ -70,7 +70,7 @@ ext_circle_r: dw 0
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
 pre_circles_r:   times    NB_PRE_CIRCLES dw 0
-pre_circles_r_tampon: times NB_POST_CIRCLES dw 0
+pre_circles_r_tampon: times NB_PRE_CIRCLES dw 0
 
 post_circles_x:  times    NB_POST_CIRCLES dw 0
 post_circles_y:  times    NB_POST_CIRCLES dw 0
@@ -101,7 +101,7 @@ main:
     ;###########################################################
     ; Mettez ici votre code qui devra s'exécuter avant le dessin
     ;###########################################################
-    ; Remplissage des couleurs du kit ; TODO À simplifier
+    ; Remplissage des couleurs du kit
     ; palier 1
     mov dword[kit_colors+0*DWORD], 0x0ebeff
 
