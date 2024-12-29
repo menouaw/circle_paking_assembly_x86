@@ -34,12 +34,14 @@ extern    exit
 %define    WIDTH                  600
 %define    HEIGHT                 600
 
-%define    RAYON_CERCLE_EXTERNE  100
+%define    RAYON_CERCLE_EXTERNE  50
 
-%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
+%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/2
 
-%define    NB_PRE_CIRCLES        100
-%define    NB_POST_CIRCLES       100
+%define    NB_PRE_CIRCLES        10
+%define    NB_POST_CIRCLES       1
+
+%define    NB_KIT_STEP           3
 
 global    main
 
@@ -53,7 +55,9 @@ height:          resd    1
 window:          resq    1
 gc:              resq    1
 
-i:               resb    1
+i:               resb    1 ; TODO À changer en word
+color_counter    resw    1
+
 
 
 section .data
@@ -75,7 +79,10 @@ dist_min: dw 0
 ind_closest_init: dw 0
 ind_closest_tan: dw 0
 
+kit_colors: times NB_KIT_STEP dd 0
+
 fmt_debug: db "Debug: %d", 10, 0
+fmt_debug_x: db "Debug: %x", 10, 0
 
 fmt_init_circles:          db       "Cercle initial %d : x = %d, y = %d, r = %d", 10, 0
 fmt_tan_circles:          db       "Cercle tangent %d : x = %d, y = %d, r = %d", 10, 0
@@ -87,11 +94,25 @@ section .text
 ;########### PROGRAMME PRINCIPAL ##################
 ;##################################################
 
+
 main:
     ;###########################################################
     ; Mettez ici votre code qui devra s'exécuter avant le dessin
     ;###########################################################
-    
+    ; Remplissage des couleurs du kit ; TODO À simplifier
+    ; palier 1
+    mov dword[kit_colors+0*DWORD], 0xFF0000
+
+    ; palier 2
+    mov dword[kit_colors+1*DWORD], 0x00FF00
+
+    ; palier 3
+    mov dword[kit_colors+2*DWORD], 0x0000FF
+
+    mov rdi, fmt_debug_x
+    mov esi, dword[kit_colors+0*DWORD]
+    mov rax, 0
+    call printf
 
     ;###############################
     ; Code de création de la fenêtre
@@ -162,7 +183,7 @@ dessin:
     ; itère le programme jusqu'à l'arrêt
     mov    rdi, qword[display_name]
     mov    rsi, qword[gc]
-    mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
+    mov    edx, dword[kit_colors+1*DWORD]      ; Couleur du crayon ; deuxième palier
     call   XSetForeground
 
 ; ETAPE 3
@@ -192,6 +213,7 @@ dessin:
     
 ; ETAPE 1
 mov    byte[i], 0
+mov    word[color_counter], 0
 boucle_cercles_initiaux:
     ; génère les cercles initiaux
     mov    r14b, byte[i]
@@ -270,12 +292,13 @@ next_pre:
         mov    bx, word[pre_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
-
+        
+        
         mov    bx, word[pre_circles_y+r14*WORD]
         mov    r15w, word[pre_circles_r+r14*WORD]
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, r12w
+        movzx  r9, word[pre_circles_r+r14*WORD]
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -283,6 +306,33 @@ next_pre:
         push   r9
 
         call   XDrawArc
+        
+        pre_inner_arc:
+            ; TODO s'occuper de colorer les cercles
+            mov r15w, word[pre_circles_r+r14*WORD]
+            cmp r15w, 0
+            je boucle_affichage_pre
+            
+            mov ax, word[color_counter]
+            mov bx, NB_KIT_STEP ; div ne prend pas de valeur fixe
+            xor dx, dx
+            div bx ; reste dans dx
+            
+            ;mov rdi, fmt_debug
+            ;movzx rsi, dx
+            ;mov rax, 0
+            ;call printf
+            
+            movzx r15, dx
+            
+            mov rdi, qword[display_name]
+            mov rsi, qword[gc]
+            mov edx, [kit_colors+r15*DWORD]
+            call XSetForeground
+            
+            dec word[pre_circles_r+r14*WORD]
+            inc word[color_counter]
+            jmp generate_circle_step_one
     
 ; FIN ETAPE 1
 
