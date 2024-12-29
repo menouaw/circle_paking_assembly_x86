@@ -327,7 +327,7 @@ next_pre:
             
             mov rdi, qword[display_name]
             mov rsi, qword[gc]
-            mov edx, [kit_colors+r15*DWORD]
+            mov edx, dword[kit_colors+r15*DWORD]
             call XSetForeground
             
             dec word[pre_circles_r+r14*WORD]
@@ -357,6 +357,7 @@ boucle_incrementation_compteur_init:
 
 ; ETAPE 2
 mov byte[i], 0
+mov word[color_counter], 0
 boucle_cercles_tangents:
     ; génère les cercles tangents
     mov r14b, byte[i]
@@ -607,6 +608,27 @@ boucle_cercle_proche:
         push   r9
 
         call   XDrawArc
+        
+        post_inner_arc:
+            mov r15w, word[post_circles_r+r14*WORD]
+            cmp r15w, 0
+            je boucle_affichage_post
+            
+            mov ax, word[color_counter]
+            mov bx, NB_KIT_STEP
+            xor dx, dx
+            div bx
+            
+            movzx r15, dx
+            
+            mov rdi, qword[display_name]
+            mov rsi, qword[gc]
+            mov edx, dword[kit_colors+r15*DWORD]
+            call XSetForeground
+            
+            dec word[post_circles_r+r14*WORD]
+            inc word[color_counter]
+            jmp generate_circle_step_two
 
 ; FIN ETAPE 2
 
