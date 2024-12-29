@@ -34,14 +34,14 @@ extern    exit
 %define    WIDTH                  600
 %define    HEIGHT                 600
 
-%define    RAYON_CERCLE_EXTERNE  50
+%define    RAYON_CERCLE_EXTERNE  150
 
-%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/2
+%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
-%define    NB_PRE_CIRCLES        1
-%define    NB_POST_CIRCLES       2
+%define    NB_PRE_CIRCLES        30
+%define    NB_POST_CIRCLES       150 ; /!\ NE SEMBLE PAS SUPPORTER LES NOMBRES > 150 SUR MA MACHINE!
 
-%define    NB_KIT_STEP           3
+%define    NB_KIT_STEP           10
 
 global    main
 
@@ -55,7 +55,7 @@ height:          resd    1
 window:          resq    1
 gc:              resq    1
 
-i:               resb    1 ; TODO À changer en word
+i:               resw    1
 color_counter    resw    1
 
 
@@ -103,14 +103,28 @@ main:
     ;###########################################################
     ; Remplissage des couleurs du kit ; TODO À simplifier
     ; palier 1
-    mov dword[kit_colors+0*DWORD], 0xFF0000
+    mov dword[kit_colors+0*DWORD], 0x0ebeff
 
     ; palier 2
-    mov dword[kit_colors+1*DWORD], 0x00FF00
+    mov dword[kit_colors+1*DWORD], 0x29b0f7
 
     ; palier 3
-    mov dword[kit_colors+2*DWORD], 0x0000FF
-
+    mov dword[kit_colors+2*DWORD], 0x44a2ee
+    
+    mov dword[kit_colors+3*DWORD], 0x5e95e6
+    
+    mov dword[kit_colors+4*DWORD], 0x7987dd
+    
+    mov dword[kit_colors+5*DWORD], 0x9479d5
+    
+    mov dword[kit_colors+6*DWORD], 0xaf6bcc
+    
+    mov dword[kit_colors+7*DWORD], 0xc95ec4
+    
+    mov dword[kit_colors+8*DWORD], 0xe450bb
+    
+    mov dword[kit_colors+9*DWORD], 0xff42b3
+    
     mov rdi, fmt_debug_x
     mov esi, dword[kit_colors+0*DWORD]
     mov rax, 0
@@ -214,11 +228,11 @@ dessin:
 ; FIN ETAPE 3
     
 ; ETAPE 1
-mov    byte[i], 0
+mov    word[i], 0
 mov    word[color_counter], 0
 boucle_cercles_initiaux:
     ; génère les cercles initiaux
-    mov    r14b, byte[i]
+    mov    r14w, word[i]
     mov    rdi, WIDTH
     call   random_number
     mov    r10w, ax
@@ -349,8 +363,8 @@ boucle_affichage_pre:
     call   printf
 
 boucle_incrementation_compteur_init:
-    inc    byte[i]
-    cmp    byte[i], NB_PRE_CIRCLES
+    inc    word[i]
+    cmp    word[i], NB_PRE_CIRCLES
     jb     boucle_cercles_initiaux
     
     mov rdi, crlf
@@ -358,11 +372,11 @@ boucle_incrementation_compteur_init:
     call printf
 
 ; ETAPE 2
-mov byte[i], 0
+mov word[i], 0
 mov word[color_counter], 0
 boucle_cercles_tangents:
     ; génère les cercles tangents
-    mov r14b, byte[i]
+    mov r14w, word[i]
     mov rdi, WIDTH
     call random_number
     mov r10w, ax ; stocke le x aléatoire dans r10w
@@ -646,8 +660,8 @@ boucle_affichage_post:
     mov    rax, 0
     call   printf
 
-    inc    byte[i]
-    cmp    byte[i], NB_POST_CIRCLES
+    inc    word[i]
+    cmp    word[i], NB_POST_CIRCLES
     jb     boucle_cercles_tangents
 
     
