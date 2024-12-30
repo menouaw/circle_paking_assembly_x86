@@ -35,12 +35,12 @@ extern    exit
 %define    WIDTH                 600
 %define    HEIGHT                600
 
-%define RAYON_CERCLE_EXTERNE 250
+%define RAYON_CERCLE_EXTERNE 150
 
-%define    RAYON_MAX             150 ; TODO À améliorer
+%define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4 ; TODO À améliorer
 
-%define    NB_PRE_CIRCLES        2
-%define    NB_POST_CIRCLES       5
+%define    NB_PRE_CIRCLES        10
+%define    NB_POST_CIRCLES       50
 
 %define NB_KIT_STEP 26
 
@@ -501,8 +501,7 @@ next_post_tan:
 
 boucle_cercle_proche:
     ; on cherche le cercle le plus proche
-    mov word[dist_min], 30000 ; TODO À remplacer par une valeur modulaire
-    ; TODO Réinitialiser la valeur de la distance minimale au cercle le plus proche - non utile pour le moment ?
+    mov word[dist_min], 9999 ; TODO À remplacer par une valeur modulaire (théorème de pythagore?)
     
     mov r13, 0
     boucle_cp_init:
@@ -551,17 +550,8 @@ boucle_cercle_proche:
         
     cmp word[dist_min], r8w
     
-    ;mov rdi, fmt_debug
-    ;movzx rsi, r8w
-    ;mov rax, 0
-    ;call printf
-    ;mov rdi, fmt_debug
-    ;movzx rsi, word[dist_min] 
-    ;mov rax, 0
-    ;call printf
-    
     je case_cp_init
-    jne case_cp_tan
+    jne case_cp_tan 
     
     case_cp_init:
         ; new_circle_r = dist_min - closest_circle_r
@@ -577,7 +567,7 @@ boucle_cercle_proche:
         jmp entry_point_boucle_verif_post_restrictions_init_2
     
     case_cp_tan:
-        mov ax, r8w
+        mov ax, word[dist_min]
         mov r15w, word[ind_closest_tan]
         sub ax, word[post_circles_r+r15*WORD]
         cmp ax, 0
