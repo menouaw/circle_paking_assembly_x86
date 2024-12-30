@@ -39,8 +39,8 @@ extern    exit
 
 %define    RAYON_MAX             150 ; TODO À améliorer
 
-%define    NB_PRE_CIRCLES        1
-%define    NB_POST_CIRCLES       3
+%define    NB_PRE_CIRCLES        2
+%define    NB_POST_CIRCLES       5
 
 %define NB_KIT_STEP 26
 
@@ -57,31 +57,38 @@ window:          resq    1
 gc:              resq    1
 
 i:               resw    1
-; TODO implémenter le compteur de couleur
+; TODO implémenter le compteur de couleur - ok
+color_counter:   resw    1
 
 
 section .data
 event:           times    24 dq 0
 
-; TODO implémenter les coordonnées du cercle externe
+; TODO implémenter les coordonnées du cercle externe - ok
+ext_circle_x: dw 0
+ext_circle_y: dw 0
+ext_circle_r: dw 0
 
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
 pre_circles_r:   times    NB_PRE_CIRCLES dw 0
 ; TODO implémenter la variable tampon du rayon initial
+pre_circles_r_tampon: times NB_PRE_CIRCLES dw 0
 
 post_circles_x:  times    NB_POST_CIRCLES dw 0
 post_circles_y:  times    NB_POST_CIRCLES dw 0
 post_circles_r:  times    NB_POST_CIRCLES dw 0
-; TODO implémenter la variable tampon du rayon tangent
+; TODO implémenter la variable tampon du rayon tangent - ok
+post_circles_r_tampon: times NB_POST_CIRCLES dw 0
 
 dist_min: dw 0
 ind_closest_init: dw 0
 ind_closest_tan: dw 0
 
-; TODO implémenter le tableau qui stockera les paliers de couleurs
-
+; TODO implémenter le tableau qui stockera les paliers de couleurs - ok
+kit_colors: times NB_KIT_STEP dd 0
 ; TODO implémenter le booléen qui vérifiera la bienséance du dessin
+bool_fin: db 0
 
 fmt_debug: db "Debug: %d", 10, 0
 
@@ -100,7 +107,36 @@ main:
     ; Mettez ici votre code qui devra s'exécuter avant le dessin
     ;###########################################################
     
-    ; TODO implémenter le remplissage des couleurs du kit
+    ; TODO implémenter le remplissage des couleurs du kit - ok
+    ; remplissage des couleurs du kit
+    ; palier 1
+    mov dword[kit_colors+0*DWORD], 0x0ebeff
+    ; palier 2
+    mov dword[kit_colors+1*DWORD], 0x18b9fc
+    mov dword[kit_colors+2*DWORD], 0x21b4f9
+    mov dword[kit_colors+3*DWORD], 0x2baff6
+    mov dword[kit_colors+4*DWORD], 0x35aaf3
+    mov dword[kit_colors+5*DWORD], 0x3ea5f0
+    mov dword[kit_colors+6*DWORD], 0x48a0ed
+    mov dword[kit_colors+7*DWORD], 0x519bea
+    mov dword[kit_colors+8*DWORD], 0x5b96e7
+    mov dword[kit_colors+9*DWORD], 0x6591e4
+    mov dword[kit_colors+10*DWORD], 0x6e8ce1
+    mov dword[kit_colors+11*DWORD], 0x7887de
+    mov dword[kit_colors+12*DWORD], 0x8282db
+    mov dword[kit_colors+13*DWORD], 0x8b7ed7
+    mov dword[kit_colors+14*DWORD], 0x9579d4
+    mov dword[kit_colors+15*DWORD], 0x9f74d1
+    mov dword[kit_colors+16*DWORD], 0xa86fce
+    mov dword[kit_colors+17*DWORD], 0xb26acb
+    mov dword[kit_colors+18*DWORD], 0xbc65c8
+    mov dword[kit_colors+19*DWORD], 0xc560c5
+    mov dword[kit_colors+20*DWORD], 0xcf5bc2
+    mov dword[kit_colors+21*DWORD], 0xd856bf
+    mov dword[kit_colors+22*DWORD], 0xe251bc
+    mov dword[kit_colors+23*DWORD], 0xec4cb9
+    mov dword[kit_colors+24*DWORD], 0xf547b6
+    mov dword[kit_colors+25*DWORD], 0xff42b3
     
     ;###############################
     ; Code de création de la fenêtre
@@ -126,7 +162,7 @@ main:
     mov    rcx, 10
     mov    r8, WIDTH
     mov    r9, HEIGHT
-    push   0xFFFFFF ; TODO remplacer par une valeur définie
+    push   BACKGROUND_COLOR ; TODO remplacer par une valeur définie - ok
     push   0x00FF00
     push   1
     call   XCreateSimpleWindow
@@ -136,6 +172,7 @@ main:
     mov    rdx, 131077
     call   XSelectInput
     ; TODO dépiler?
+    ; add rsp, 24
 
     mov    rdi, qword[display_name]
     mov    rsi, qword[window]
@@ -154,16 +191,20 @@ main:
     call   XSetForeground
 
 boucle:                              ; boucle de gestion des évènements
-    ; TODO gérer la fin par appui sur touche?
+    ; TODO gérer la fin par appui sur touche? - ok
     mov    rdi, qword[display_name]
     mov    rsi, event
     call   XNextEvent
 
+    cmp    dword[event], KeyPress
+    je     closeDisplay
+    
+    cmp byte[bool_fin], 1 ; vérifie si le programme a déjà généré les cercles
+    je flush
+    
     cmp    dword[event], ConfigureNotify
     je     dessin
     
-    cmp    dword[event], KeyPress
-    je     closeDisplay
     jmp    boucle
 
 ;#########################################
@@ -171,13 +212,39 @@ boucle:                              ; boucle de gestion des évènements
 ;#########################################
 dessin:
     ; itère le programme jusqu'à l'arrêt
-    mov    rdi, qword[display_name]
-    mov    rsi, qword[gc]
-    mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
-    call   XSetForeground ; TODO À supprimer après l'ajout de l'étape 3
     
-    ; ETAPE 3
-    ; TODO Implémenter l'étape 3
+    ;mov    rdi, qword[display_name]
+    ;mov    rsi, qword[gc]
+    ;mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
+    ;call   XSetForeground ; TODO À supprimer après l'ajout de l'étape 3 - ok
+    
+    ; ETAPE 3 ; cercle externe
+    ; TODO Implémenter l'étape 3 - ok
+    mov ax, WIDTH
+    shr ax, 1 ; division par 2 via décalage de bits vers la droite
+    mov r10w, ax
+    
+    mov ax, HEIGHT
+    shr ax, 1
+    mov r11w, ax
+    
+    mov ax, HEIGHT
+    shr ax, 1
+    mov r11w, ax
+    
+    mov r12w, RAYON_CERCLE_EXTERNE
+    
+    mov cx, r12w
+    mov word[ext_circle_r], r12w
+    
+    mov bx, r10w
+    mov word[ext_circle_x], bx
+    
+    sub bx, cx
+    movzx rcx, bx
+    
+    mov bx, r11w
+    mov word[ext_circle_y], bx
     ; FIN ETAPE 3
     
 
@@ -550,13 +617,15 @@ boucle_affichage_post:
     cmp    word[i], NB_POST_CIRCLES
     jb     boucle_cercles_tangents
     
-    ; TODO affecter le booléen de fin de dessin
+    ; TODO affecter le booléen de fin de dessin - ok
+    fin_affichage_cercles:
+        mov byte[bool_fin], 1
 
     
 flush:
     mov    rdi, qword[display_name]
     call   XFlush
-    ;jmp    boucle ; ; TODO à activer quand corrigé
+    jmp    boucle ; TODO à activer quand corrigé - ok
     mov    rax, 34
     syscall
 
