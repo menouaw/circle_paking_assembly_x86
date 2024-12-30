@@ -35,12 +35,12 @@ extern    exit
 %define    WIDTH                 600
 %define    HEIGHT                600
 
-%define RAYON_CERCLE_EXTERNE 200
+%define RAYON_CERCLE_EXTERNE 250
 
 %define    RAYON_MAX             150 ; TODO À améliorer
 
 %define    NB_PRE_CIRCLES        2
-%define    NB_POST_CIRCLES       50
+%define    NB_POST_CIRCLES       5
 
 %define NB_KIT_STEP 26
 
@@ -402,6 +402,7 @@ boucle_incrementation_compteur_init:
 ; ETAPE 2
 mov word[i], 0
 ; TODO réinitialiser le compteur de couleur
+mov word[color_counter], 0 ; ok
 boucle_cercles_tangents:
     ; génère les cercles tangents
     mov r14w, word[i]
@@ -430,6 +431,21 @@ boucle_cercles_tangents:
     mov word[post_circles_y+r14*WORD], bx
     
 ; TODO implémenter la vérification du cercle tangent dans le cercle externe
+boucle_verif_post_dans_ext: ; ok
+    ; vérifie que les cercles tangents se trouvent dans le cercle externe
+    movzx edi, word[post_circles_x+r14*WORD]
+    movzx esi, word[post_circles_y+r14*WORD]
+    movzx edx, word[ext_circle_x]
+    movzx ecx, word[ext_circle_y]
+    
+    call points_gap
+    
+    mov r10, 1 ; x, y du cercle (pathologique)
+    movzx r11, word[ext_circle_r]
+    add r10, r11
+    
+    cmp rax, r10
+    ja boucle_cercles_tangents
     
 mov r13, 0
 boucle_verif_post_restrictions_init:
@@ -486,7 +502,7 @@ next_post_tan:
 boucle_cercle_proche:
     ; on cherche le cercle le plus proche
     mov word[dist_min], 30000 ; TODO À remplacer par une valeur modulaire
-    ; TODO Réinitialiser la valeur de la distance minimale au cercle le plus proche
+    ; TODO Réinitialiser la valeur de la distance minimale au cercle le plus proche - non utile pour le moment ?
     
     mov r13, 0
     boucle_cp_init:
@@ -557,6 +573,7 @@ boucle_cercle_proche:
         
         mov word[post_circles_r+r14*WORD], ax
         ; TODO affecter la valeur du rayon tampon
+        mov word[post_circles_r_tampon+r14*WORD], ax ; ok
         jmp entry_point_boucle_verif_post_restrictions_init_2
     
     case_cp_tan:
@@ -568,6 +585,7 @@ boucle_cercle_proche:
         
         mov word[post_circles_r+r14*WORD], ax
         ; TODO affecter la valeur du rayon tampon
+        mov word[post_circles_r_tampon+r14*WORD], ax ; ok
         jmp entry_point_boucle_verif_post_restrictions_init_2
         
     entry_point_boucle_verif_post_restrictions_init_2:
@@ -624,17 +642,17 @@ boucle_cercle_proche:
         mov    rdi, qword[display_name]
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
-        mov    cx, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
+        mov    cx, word[post_circles_r_tampon+r14*WORD] ; TODO changer par la valeur du rayon tampon ; ok
 
         mov    bx, word[post_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
 
         mov    bx, word[post_circles_y+r14*WORD]
-        mov    r15w, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
+        mov    r15w, word[post_circles_r_tampon+r14*WORD] ; TODO changer par la valeur du rayon tampon ; ok
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
+        movzx  r9, word[post_circles_r_tampon+r14*WORD] ; TODO changer par la valeur du rayon tampon ; ok
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -645,7 +663,27 @@ boucle_cercle_proche:
         ; TODO dépiler?
         
     ; TODO gérer le remplissage par couleur du cercle
-
+        post_inner_arc: ; awaiting
+            mov    r15w, word[post_circles_r_tampon+r14*WORD]
+            cmp    r15w, 0
+            je     boucle_affichage_post
+                
+            mov    ax, word[color_counter]
+            mov    bx, NB_KIT_STEP
+            xor    dx, dx
+            div    bx
+                
+            movzx  r15, dx
+                
+            mov    rdi, qword[display_name]
+            mov    rsi, qword[gc]
+            mov    edx, dword[kit_colors+r15*DWORD]
+            call   XSetForeground
+                
+            dec    word[post_circles_r_tampon+r14*WORD]
+            inc    word[color_counter]
+            jmp    generate_circle_step_two
+            
 ; FIN ETAPE 2
 
 boucle_affichage_post:
