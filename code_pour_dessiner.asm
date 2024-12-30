@@ -30,8 +30,8 @@ extern    exit
 ; Configuration des cercles 
 ;###########################
 ; WARNING indiquer une valeur positive uniquement
-%define    NB_PRE_CIRCLES        1
-%define    NB_POST_CIRCLES       5
+%define    NB_PRE_CIRCLES        1000
+%define    NB_POST_CIRCLES       1000
 
 %define    RAYON_CERCLE_EXTERNE  150
 
@@ -685,10 +685,11 @@ dessin:
 random_number:
 relancer:
     rdrand  ax
+    ; rdseed ax
     jc      valide
     jmp     relancer
 valide:
-    mov     dx, 0
+    xor     dx, dx
     div     di
     mov     ax, dx
     ret
