@@ -31,12 +31,18 @@ extern    exit
 %define    WORD                   2
 %define    BYTE                   1
 
-%define    WIDTH                  600
-%define    HEIGHT                 600
-%define    RAYON_MAX             300
+%define    BACKGROUND_COLOR      0xffc7e9
+%define    WIDTH                 600
+%define    HEIGHT                600
+
+%define RAYON_CERCLE_EXTERNE 150
+
+%define    RAYON_MAX             150 ; TODO À améliorer
 
 %define    NB_PRE_CIRCLES        1
 %define    NB_POST_CIRCLES       3
+
+%define NB_KIT_STEP 26
 
 global    main
 
@@ -50,7 +56,7 @@ height:          resd    1
 window:          resq    1
 gc:              resq    1
 
-i:               resb    1
+i:               resw    1
 
 
 section .data
@@ -159,10 +165,10 @@ dessin:
     call   XSetForeground
 
 ; ETAPE 1
-mov    byte[i], 0
+mov    word[i], 0
 boucle_cercles_initiaux:
     ; génère les cercles initiaux
-    mov    r14b, byte[i]
+    mov    r14w, word[i]
     mov    rdi, WIDTH
     call   random_number
     mov    r10w, ax
@@ -242,7 +248,7 @@ next_pre:
 boucle_affichage_pre:
     ; affichage dans la sortie standard (non demandé)
     mov    rdi, fmt_init_circles
-    movzx  rsi, r14b
+    movzx  rsi, r14w
     movzx  rdx, word[pre_circles_x+r14*WORD]
     movzx  rcx, word[pre_circles_y+r14*WORD]
     movzx  r8, word[pre_circles_r+r14*WORD]
@@ -250,8 +256,8 @@ boucle_affichage_pre:
     call   printf
 
 boucle_incrementation_compteur_init:
-    inc    byte[i]
-    cmp    byte[i], NB_PRE_CIRCLES
+    inc    word[i]
+    cmp    word[i], NB_PRE_CIRCLES
     jb     boucle_cercles_initiaux
     
     mov rdi, crlf
@@ -259,10 +265,10 @@ boucle_incrementation_compteur_init:
     call printf
 
 ; ETAPE 2
-mov byte[i], 0
+mov word[i], 0
 boucle_cercles_tangents:
     ; génère les cercles tangents
-    mov r14b, byte[i]
+    mov r14w, word[i]
     mov rdi, WIDTH
     call random_number
     mov r10w, ax ; stocke le x aléatoire dans r10w
@@ -502,15 +508,15 @@ boucle_cercle_proche:
 boucle_affichage_post:
     ; affichage dans la sortie standard (non demandé)
     mov    rdi, fmt_tan_circles
-    movzx  rsi, r14b
+    movzx  rsi, r14w
     movzx  rdx, word[post_circles_x+r14*WORD]
     movzx  rcx, word[post_circles_y+r14*WORD]
     movzx  r8, word[post_circles_r+r14*WORD]
     mov    rax, 0
     call   printf
 
-    inc    byte[i]
-    cmp    byte[i], NB_POST_CIRCLES
+    inc    word[i]
+    cmp    word[i], NB_POST_CIRCLES
     jb     boucle_cercles_tangents
 
     
