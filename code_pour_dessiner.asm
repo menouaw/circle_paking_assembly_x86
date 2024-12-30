@@ -35,12 +35,12 @@ extern    exit
 %define    WIDTH                 600
 %define    HEIGHT                600
 
-%define RAYON_CERCLE_EXTERNE 150
+%define RAYON_CERCLE_EXTERNE 200
 
 %define    RAYON_MAX             150 ; TODO À améliorer
 
 %define    NB_PRE_CIRCLES        2
-%define    NB_POST_CIRCLES       5
+%define    NB_POST_CIRCLES       50
 
 %define NB_KIT_STEP 26
 
@@ -189,6 +189,36 @@ main:
     mov    rsi, qword[gc]
     mov    rdx, 0x000000
     call   XSetForeground
+    
+    ; ETAPE 3 ; cercle externe
+    ; TODO Implémenter l'étape 3 - ok
+    ; TODO à sortir de la boucle? - ok
+    mov ax, WIDTH
+    shr ax, 1 ; division par 2 via décalage de bits vers la droite
+    mov r10w, ax
+    
+    mov ax, HEIGHT
+    shr ax, 1
+    mov r11w, ax
+    
+    mov ax, HEIGHT
+    shr ax, 1
+    mov r11w, ax
+    
+    mov r12w, RAYON_CERCLE_EXTERNE
+    
+    mov cx, r12w
+    mov word[ext_circle_r], r12w
+    
+    mov bx, r10w
+    mov word[ext_circle_x], bx
+    
+    sub bx, cx
+    movzx rcx, bx
+    
+    mov bx, r11w
+    mov word[ext_circle_y], bx
+    ; FIN ETAPE 3
 
 boucle:                              ; boucle de gestion des évènements
     ; TODO gérer la fin par appui sur touche? - ok
@@ -218,39 +248,10 @@ dessin:
     ;mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
     ;call   XSetForeground ; TODO À supprimer après l'ajout de l'étape 3 - ok
     
-    ; ETAPE 3 ; cercle externe
-    ; TODO Implémenter l'étape 3 - ok
-    mov ax, WIDTH
-    shr ax, 1 ; division par 2 via décalage de bits vers la droite
-    mov r10w, ax
-    
-    mov ax, HEIGHT
-    shr ax, 1
-    mov r11w, ax
-    
-    mov ax, HEIGHT
-    shr ax, 1
-    mov r11w, ax
-    
-    mov r12w, RAYON_CERCLE_EXTERNE
-    
-    mov cx, r12w
-    mov word[ext_circle_r], r12w
-    
-    mov bx, r10w
-    mov word[ext_circle_x], bx
-    
-    sub bx, cx
-    movzx rcx, bx
-    
-    mov bx, r11w
-    mov word[ext_circle_y], bx
-    ; FIN ETAPE 3
-    
-
 ; ETAPE 1
 mov    word[i], 0
 ; TODO initialiser le compteur de couleur à 0
+mov word[color_counter], 0 ; ok
 boucle_cercles_initiaux:
     ; génère les cercles initiaux
     mov    r14w, word[i]
@@ -264,12 +265,16 @@ boucle_cercles_initiaux:
 
     mov    rdi, RAYON_MAX
     call   random_number
+    ; TODO vérifier que le rayon est supérieur à 0
+    cmp ax, 0 ; ok
+    jle boucle_cercles_initiaux
     mov    r12w, ax
     
     mov    cx, r12w
     mov    word[pre_circles_r+r14*WORD], r12w
-    ; affecter la variable tampon
-
+    ; TODO affecter la variable tampon
+    mov    word[pre_circles_r_tampon+r14*WORD], r12w ; ok
+    
     mov    bx, r10w
     mov    word[pre_circles_x+r14*WORD], bx
 
@@ -280,7 +285,22 @@ boucle_cercles_initiaux:
     mov    word[pre_circles_y+r14*WORD], bx
 
 ; TODO implémenter la vérification du cercle initial dans le cercle externe
+boucle_verif_pre_dans_ext: ; ok
+    ; vérifie que les cercles initiaux se trouvent dans le cercle externe
+    movzx edi, word[pre_circles_x+r14*WORD]
+    movzx esi, word[pre_circles_y+r14*WORD]
+    movzx edx, word[ext_circle_x]
+    movzx ecx, word[ext_circle_y]
 
+    call points_gap
+
+    mov r10, 1 ; cercle sur le point x, y du cercle
+    movzx r11, word[ext_circle_r]
+    add r10, r11
+
+    cmp rax, r10
+    ja boucle_cercles_initiaux
+    
 mov    r13, 0
 boucle_verif_pre_restrictions:
     ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
@@ -312,16 +332,16 @@ next_pre:
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
         
-        mov    cx, word[pre_circles_r+r14*WORD] ; TODO affecter la variable rayon tampon
+        mov    cx, word[pre_circles_r_tampon+r14*WORD] ; TODO affecter la variable rayon tampon ; ok
         mov    bx, word[pre_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
 
         mov    bx, word[pre_circles_y+r14*WORD]
-        mov    r15w, word[pre_circles_r+r14*WORD] ; TODO affecter la variable rayon tampon
+        mov    r15w, word[pre_circles_r_tampon+r14*WORD] ; TODO affecter la variable rayon tampon ; ok
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, r12w ; TODO affecter la variable rayon tampon
+        movzx  r9, word[pre_circles_r_tampon+r14*WORD] ; TODO affecter la variable rayon tampon ; ok
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -332,6 +352,31 @@ next_pre:
         ; TODO dépiler?
         
 ; TODO gérer le remplissage par couleur du cercle
+pre_inner_arc: ; ok
+    mov r15w, word[pre_circles_r_tampon+r14*WORD]
+    cmp r15w, 0
+    je boucle_affichage_pre
+
+    mov ax, word[color_counter]
+    mov bx, NB_KIT_STEP
+    xor dx, dx
+    div bx ; le reste est dans dx
+
+    ;mov rdi, fmt_debug
+    ;movzx rsi, dx
+    ;mov rax, 0
+    ;call printf
+
+    movzx r15, dx
+
+    mov rdi, qword[display_name]
+    mov rsi, qword[gc]
+    mov edx, dword[kit_colors+r15*DWORD]
+    call XSetForeground
+
+    dec word[pre_circles_r_tampon+r14*WORD]
+    inc word[color_counter]
+    jmp generate_circle_step_one
     
 ; FIN ETAPE 1
 
