@@ -57,22 +57,31 @@ window:          resq    1
 gc:              resq    1
 
 i:               resw    1
+; TODO implémenter le compteur de couleur
 
 
 section .data
 event:           times    24 dq 0
 
+; TODO implémenter les coordonnées du cercle externe
+
 pre_circles_x:   times    NB_PRE_CIRCLES dw 0
 pre_circles_y:   times    NB_PRE_CIRCLES dw 0
 pre_circles_r:   times    NB_PRE_CIRCLES dw 0
+; TODO implémenter la variable tampon du rayon initial
 
 post_circles_x:  times    NB_POST_CIRCLES dw 0
 post_circles_y:  times    NB_POST_CIRCLES dw 0
 post_circles_r:  times    NB_POST_CIRCLES dw 0
+; TODO implémenter la variable tampon du rayon tangent
 
 dist_min: dw 0
 ind_closest_init: dw 0
 ind_closest_tan: dw 0
+
+; TODO implémenter le tableau qui stockera les paliers de couleurs
+
+; TODO implémenter le booléen qui vérifiera la bienséance du dessin
 
 fmt_debug: db "Debug: %d", 10, 0
 
@@ -91,7 +100,8 @@ main:
     ; Mettez ici votre code qui devra s'exécuter avant le dessin
     ;###########################################################
     
-
+    ; TODO implémenter le remplissage des couleurs du kit
+    
     ;###############################
     ; Code de création de la fenêtre
     ;###############################
@@ -116,7 +126,7 @@ main:
     mov    rcx, 10
     mov    r8, WIDTH
     mov    r9, HEIGHT
-    push   0xFFFFFF
+    push   0xFFFFFF ; TODO remplacer par une valeur définie
     push   0x00FF00
     push   1
     call   XCreateSimpleWindow
@@ -125,6 +135,7 @@ main:
     mov    rsi, qword[window]
     mov    rdx, 131077
     call   XSelectInput
+    ; TODO dépiler?
 
     mov    rdi, qword[display_name]
     mov    rsi, qword[window]
@@ -143,6 +154,7 @@ main:
     call   XSetForeground
 
 boucle:                              ; boucle de gestion des évènements
+    ; TODO gérer la fin par appui sur touche?
     mov    rdi, qword[display_name]
     mov    rsi, event
     call   XNextEvent
@@ -162,10 +174,16 @@ dessin:
     mov    rdi, qword[display_name]
     mov    rsi, qword[gc]
     mov    edx, 0x0000FF            ; Couleur du crayon ; bleu
-    call   XSetForeground
+    call   XSetForeground ; TODO À supprimer après l'ajout de l'étape 3
+    
+    ; ETAPE 3
+    ; TODO Implémenter l'étape 3
+    ; FIN ETAPE 3
+    
 
 ; ETAPE 1
 mov    word[i], 0
+; TODO initialiser le compteur de couleur à 0
 boucle_cercles_initiaux:
     ; génère les cercles initiaux
     mov    r14w, word[i]
@@ -183,6 +201,7 @@ boucle_cercles_initiaux:
     
     mov    cx, r12w
     mov    word[pre_circles_r+r14*WORD], r12w
+    ; affecter la variable tampon
 
     mov    bx, r10w
     mov    word[pre_circles_x+r14*WORD], bx
@@ -193,6 +212,7 @@ boucle_cercles_initiaux:
     mov    bx, r11w
     mov    word[pre_circles_y+r14*WORD], bx
 
+; TODO implémenter la vérification du cercle initial dans le cercle externe
 
 mov    r13, 0
 boucle_verif_pre_restrictions:
@@ -225,16 +245,16 @@ next_pre:
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
         
-        mov    cx, word[pre_circles_r+r14*WORD]
+        mov    cx, word[pre_circles_r+r14*WORD] ; TODO affecter la variable rayon tampon
         mov    bx, word[pre_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
 
         mov    bx, word[pre_circles_y+r14*WORD]
-        mov    r15w, word[pre_circles_r+r14*WORD]
+        mov    r15w, word[pre_circles_r+r14*WORD] ; TODO affecter la variable rayon tampon
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, r12w
+        movzx  r9, r12w ; TODO affecter la variable rayon tampon
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -242,13 +262,16 @@ next_pre:
         push   r9
 
         call   XDrawArc
+        ; TODO dépiler?
+        
+; TODO gérer le remplissage par couleur du cercle
     
 ; FIN ETAPE 1
 
 boucle_affichage_pre:
     ; affichage dans la sortie standard (non demandé)
     mov    rdi, fmt_init_circles
-    movzx  rsi, r14w
+    mov  rsi, r14
     movzx  rdx, word[pre_circles_x+r14*WORD]
     movzx  rcx, word[pre_circles_y+r14*WORD]
     movzx  r8, word[pre_circles_r+r14*WORD]
@@ -266,6 +289,7 @@ boucle_incrementation_compteur_init:
 
 ; ETAPE 2
 mov word[i], 0
+; TODO réinitialiser le compteur de couleur
 boucle_cercles_tangents:
     ; génère les cercles tangents
     mov r14w, word[i]
@@ -293,6 +317,7 @@ boucle_cercles_tangents:
     mov bx, r11w
     mov word[post_circles_y+r14*WORD], bx
     
+; TODO implémenter la vérification du cercle tangent dans le cercle externe
     
 mov r13, 0
 boucle_verif_post_restrictions_init:
@@ -349,6 +374,7 @@ next_post_tan:
 boucle_cercle_proche:
     ; on cherche le cercle le plus proche
     mov word[dist_min], 30000 ; TODO À remplacer par une valeur modulaire
+    ; TODO Réinitialiser la valeur de la distance minimale au cercle le plus proche
     
     mov r13, 0
     boucle_cp_init:
@@ -418,6 +444,7 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
+        ; TODO affecter la valeur du rayon tampon
         jmp entry_point_boucle_verif_post_restrictions_init_2
     
     case_cp_tan:
@@ -428,6 +455,7 @@ boucle_cercle_proche:
         jle boucle_verif_post_restrictions_tan
         
         mov word[post_circles_r+r14*WORD], ax
+        ; TODO affecter la valeur du rayon tampon
         jmp entry_point_boucle_verif_post_restrictions_init_2
         
     entry_point_boucle_verif_post_restrictions_init_2:
@@ -484,17 +512,17 @@ boucle_cercle_proche:
         mov    rdi, qword[display_name]
         mov    rsi, qword[window]
         mov    rdx, qword[gc]
-        mov    cx, word[post_circles_r+r14*WORD]
+        mov    cx, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
 
         mov    bx, word[post_circles_x+r14*WORD]
         sub    bx, cx
         movzx  rcx, bx
 
         mov    bx, word[post_circles_y+r14*WORD]
-        mov    r15w, word[post_circles_r+r14*WORD]
+        mov    r15w, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
         sub    bx, r15w
         movzx  r8, bx
-        movzx  r9, word[post_circles_r+r14*WORD]
+        movzx  r9, word[post_circles_r+r14*WORD] ; TODO changer par la valeur du rayon tampon
         shl    r9, 1
         mov    rax, 23040
         push   rax
@@ -502,13 +530,16 @@ boucle_cercle_proche:
         push   r9
 
         call   XDrawArc
+        ; TODO dépiler?
+        
+    ; TODO gérer le remplissage par couleur du cercle
 
 ; FIN ETAPE 2
 
 boucle_affichage_post:
     ; affichage dans la sortie standard (non demandé)
     mov    rdi, fmt_tan_circles
-    movzx  rsi, r14w
+    mov  rsi, r14
     movzx  rdx, word[post_circles_x+r14*WORD]
     movzx  rcx, word[post_circles_y+r14*WORD]
     movzx  r8, word[post_circles_r+r14*WORD]
@@ -518,12 +549,14 @@ boucle_affichage_post:
     inc    word[i]
     cmp    word[i], NB_POST_CIRCLES
     jb     boucle_cercles_tangents
+    
+    ; TODO affecter le booléen de fin de dessin
 
     
 flush:
     mov    rdi, qword[display_name]
     call   XFlush
-    ;jmp    boucle ; stand-by: ça cause divers problèmes
+    ;jmp    boucle ; ; TODO à activer quand corrigé
     mov    rax, 34
     syscall
 
