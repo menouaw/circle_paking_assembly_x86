@@ -551,26 +551,24 @@ valide:
 ; points_gap(edi(x1), esi(y1), edx(x2), ecx(y2))
 ; => rax(distance)
 points_gap:
-    ; Calculer (x1 - x2)^2
-    mov     eax, edi
-    sub     eax, edx
-    imul    eax, eax
+    ; Convertir les coordonnées en nombres flottants double précision
+    cvtsi2sd xmm0, edi  ; xmm0 = x1 (double)
+    cvtsi2sd xmm1, esi  ; xmm1 = y1 (double)
+    cvtsi2sd xmm2, edx  ; xmm2 = x2 (double)
+    cvtsi2sd xmm3, ecx  ; xmm3 = y2 (double)
 
-    ; Calculer (y1 - y2)^2
-    mov     ebx, esi
-    sub     ebx, ecx
-    imul    ebx, ebx
+    subsd   xmm0, xmm2  ; xmm0 = x1 - x2
 
-    ; Calculer (x1 - x2)^2 + (y1 - y2)^2
-    add     eax, ebx
+    subsd   xmm1, xmm3  ; xmm1 = y1 - y2
+    
+    mulsd   xmm0, xmm0  ; xmm0 = (x1 - x2)^2
 
-    ; Convertir le résultat en flottant
-    cvtsi2sd xmm0, eax
+    mulsd   xmm1, xmm1  ; xmm1 = (y1 - y2)^2
 
-    ; Calculer la racine carrée
-    sqrtsd  xmm1, xmm0
+    addsd   xmm0, xmm1  ; xmm0 = (x1 - x2)^2 + (y1 - y2)^2
 
-    ; Convertir la racine carrée en entier et arrondir
-    cvtsd2si eax, xmm1
+    sqrtsd  xmm0, xmm0  ; xmm0 = sqrt((x1 - x2)^2 + (y1 - y2)^2)
+
+    cvtsd2si rax, xmm0  ; rax = distance (entier)
 
     ret
