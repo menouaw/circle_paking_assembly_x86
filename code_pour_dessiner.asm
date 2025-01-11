@@ -31,7 +31,7 @@ extern    exit
 ;###########################
 ; WARNING indiquer une valeur positive uniquement
 %define    NB_PRE_CIRCLES        200
-%define    NB_POST_CIRCLES       1
+%define    NB_POST_CIRCLES       200
 
 %define    NB_KIT_STEP           26
 
@@ -325,7 +325,7 @@ dessin:
         cmp    rax, r10
         ja     boucle_cercles_initiaux
         
-    boucle_verif_pre_int: ; vérifie que les cercles initiaux se trouvent dans le cercle interne
+    boucle_verif_pre_dans_int: ; vérifie que les cercles initiaux se trouvent dans le cercle interne
         movzx  edi, word[pre_circles_x+r14*WORD]
         movzx  esi, word[pre_circles_y+r14*WORD]
         movzx  edx, word[int_circle_x]
@@ -340,7 +340,6 @@ dessin:
         cmp    rax, r10
         jl     boucle_cercles_initiaux
 
-        
     mov    r13, 0
     boucle_verif_pre_restrictions: ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
         cmp    r13, r14
@@ -473,6 +472,21 @@ dessin:
         cmp    rax, r10
         ja     boucle_cercles_tangents
         
+    boucle_verif_post_dans_int: ; vérifie que les cercles tangents se trouvent dans le cercle interne
+        movzx  edi, word[post_circles_x+r14*WORD]
+        movzx  esi, word[post_circles_y+r14*WORD]
+        movzx  edx, word[int_circle_x]
+        movzx  ecx, word[int_circle_y]
+        
+        call   points_gap
+        
+        mov    r10, 1
+        movzx  r11, word[int_circle_r]
+        add    r10, r11
+        
+        cmp    rax, r10
+        jl     boucle_cercles_tangents
+    
     mov    r13, 0
     boucle_verif_post_restrictions_init: ; vérifie que le cercle ne chevauche pas un cercle initial (mais permet la tangence)
         movzx  edi, word[pre_circles_x+r13*WORD]
