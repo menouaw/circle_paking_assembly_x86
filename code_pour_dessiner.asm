@@ -34,6 +34,8 @@ extern    exit
 %define    NB_POST_CIRCLES       200
 
 %define    NB_KIT_STEP           26
+; NOTE Mettre "RANDOM_COLORS" à 1 si on veut des couleurs aléatoires
+%define    RANDOM_COLORS         1
 
 %define    BACKGROUND_COLOR      0xffc7e9
 %define    WIDTH                 600
@@ -128,7 +130,11 @@ main:
     ; initialisation des valeurs nécessaires au dessin 
     ;##################################################
     
-    ; remplissage des couleurs du kit
+    mov al, 1
+    cmp al, RANDOM_COLORS
+    je fill_random_colors_kit
+    
+    ; remplissage manuel des couleurs du kit
     ; palier 1
     mov dword[kit_colors+0*DWORD], 0x0ebeff
     ; palier 2
@@ -159,6 +165,28 @@ main:
     mov dword[kit_colors+24*DWORD], 0xf547b6
     ; palier n
     mov dword[kit_colors+25*DWORD], 0xff42b3
+    
+    mov r13, 0
+    fill_random_colors_kit:
+        mov  di, 256
+        
+        call random_number
+        mov  dl, al      ; rouge
+        
+        call random_number
+        shl  dl, 8
+        mov  dl, al      ; vert
+
+        call random_number
+        shl  dl, 8       
+        mov  dl, al      ; bleu
+        
+        mov  dword[kit_colors+r13*DWORD], edx
+        
+    next_color:
+        inc r13
+        cmp r13, NB_KIT_STEP
+        jb fill_random_colors_kit
     
     ;########################
     ; création de la fenêtre 
