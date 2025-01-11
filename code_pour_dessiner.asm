@@ -30,16 +30,21 @@ extern    exit
 ; Configuration des cercles 
 ;###########################
 ; WARNING indiquer une valeur positive uniquement
-%define    NB_PRE_CIRCLES        3
-%define    NB_POST_CIRCLES       10
-
-%define    RAYON_CERCLE_EXTERNE  350
+%define    NB_PRE_CIRCLES        150
+%define    NB_POST_CIRCLES       150
 
 %define    NB_KIT_STEP           26
 
 %define    BACKGROUND_COLOR      0xffc7e9
 %define    WIDTH                 600
 %define    HEIGHT                600
+
+; NOTE Exemple de placement du cercle externe
+; ###      ABS_CERCLE_EXTERNE    WIDTH/2+150 (décalage 150 pixels vers la droite du centre)
+; ###      ORD_CERCLE_EXTERNE    WIDTH/2-200
+%define    ABS_CERCLE_EXTERNE    WIDTH/2
+%define    ORD_CERCLE_EXTERNE    HEIGHT/2-200
+%define    RAYON_CERCLE_EXTERNE  150
 
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
@@ -198,13 +203,15 @@ main:
     call   XSetForeground
     
     ; ETAPE 3 ; cercle externe
-    mov ax, WIDTH
-    shr ax, 1 ; division par 2 via décalage de bits vers la droite
-    mov r10w, ax
+    ;mov ax, WIDTH
+    ;shr ax, 1 ; division par 2 via décalage de bits vers la droite
+    ;mov r10w, ax
+    mov r10w, ABS_CERCLE_EXTERNE
     
-    mov ax, HEIGHT
-    shr ax, 1
-    mov r11w, ax
+    ;mov ax, HEIGHT
+    ;shr ax, 1
+    ;mov r11w, ax
+    mov r11w, ORD_CERCLE_EXTERNE
     
     mov r12w, RAYON_CERCLE_EXTERNE
     
