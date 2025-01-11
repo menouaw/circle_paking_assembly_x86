@@ -30,8 +30,8 @@ extern    exit
 ; Configuration des cercles 
 ;###########################
 ; WARNING indiquer une valeur positive uniquement
-%define    NB_PRE_CIRCLES        150
-%define    NB_POST_CIRCLES       150
+%define    NB_PRE_CIRCLES        200
+%define    NB_POST_CIRCLES       1
 
 %define    NB_KIT_STEP           26
 
@@ -40,11 +40,16 @@ extern    exit
 %define    HEIGHT                600
 
 ; NOTE Exemple de placement du cercle externe
-; ###      ABS_CERCLE_EXTERNE    WIDTH/2+150 (décalage 150 pixels vers la droite du centre)
-; ###      ORD_CERCLE_EXTERNE    WIDTH/2-200
+; ###      ABS_CERCLE_EXTERNE    WIDTH/2+150 (décalage de 150 pixels vers la droite du centre)
+; ###      ORD_CERCLE_EXTERNE    WIDTH/2-200 (décalage de 200 pixels vers le haut du centre)
 %define    ABS_CERCLE_EXTERNE    WIDTH/2
-%define    ORD_CERCLE_EXTERNE    HEIGHT/2-200
-%define    RAYON_CERCLE_EXTERNE  150
+%define    ORD_CERCLE_EXTERNE    HEIGHT/2
+%define    RAYON_CERCLE_EXTERNE  250
+
+%define    ABS_CERCLE_INTERNE    ABS_CERCLE_EXTERNE
+%define    ORD_CERCLE_INTERNE    ORD_CERCLE_EXTERNE
+; NOTE Meettre "RAYON_CERCLE_INTERNE" à 0 si on ne veut pas de donut
+%define    RAYON_CERCLE_INTERNE  RAYON_CERCLE_EXTERNE/2
 
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
 
@@ -84,6 +89,10 @@ event:           times    24 dq 0
 ext_circle_x: dw 0
 ext_circle_y: dw 0
 ext_circle_r: dw 0
+
+int_circle_x: dw 0
+int_circle_y: dw 0
+int_circle_r: dw 0
 
 pre_circles_x:        times    NB_PRE_CIRCLES dw 0
 pre_circles_y:        times    NB_PRE_CIRCLES dw 0
@@ -227,6 +236,26 @@ main:
     mov bx, r11w
     mov word[ext_circle_y], bx
     ; FIN ETAPE 3
+    
+    ; ETAPE BONUS ; cercle interne
+    mov r10w, ABS_CERCLE_INTERNE
+    
+    mov r11w, ORD_CERCLE_INTERNE
+    
+    mov r12w, RAYON_CERCLE_INTERNE
+    
+    mov cx, r12w
+    mov word[int_circle_r], r12w
+    
+    mov bx, r10w
+    mov word[int_circle_x], bx
+    
+    sub bx, cx
+    movzx rcx, bx
+    
+    mov bx, r11w
+    mov word[int_circle_y], bx
+    ; FIN ETAPE BONUS
 
 boucle: ; itère jusqu'à l'arrêt du programme (appui d'une touche)
     mov    rdi, qword[display_name]
@@ -295,6 +324,22 @@ dessin:
 
         cmp    rax, r10
         ja     boucle_cercles_initiaux
+        
+    boucle_verif_pre_int: ; vérifie que les cercles initiaux se trouvent dans le cercle interne
+        movzx  edi, word[pre_circles_x+r14*WORD]
+        movzx  esi, word[pre_circles_y+r14*WORD]
+        movzx  edx, word[int_circle_x]
+        movzx  ecx, word[int_circle_y]
+        
+        call   points_gap
+        
+        mov    r10, 1
+        movzx  r11, word[int_circle_r]
+        add    r10, r11
+        
+        cmp    rax, r10
+        jl     boucle_cercles_initiaux
+
         
     mov    r13, 0
     boucle_verif_pre_restrictions: ; vérifie que les cercles initiaux ne se chevauchent pas et ne sont pas tangents
