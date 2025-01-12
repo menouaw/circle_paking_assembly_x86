@@ -50,7 +50,7 @@ extern    exit
 
 %define    ABS_CERCLE_INTERNE    ABS_CERCLE_EXTERNE
 %define    ORD_CERCLE_INTERNE    ORD_CERCLE_EXTERNE
-; NOTE Meettre "RAYON_CERCLE_INTERNE" à 0 si on ne veut pas de donut
+; NOTE Mettre "RAYON_CERCLE_INTERNE" à 0 si on ne veut pas de donut
 %define    RAYON_CERCLE_INTERNE  RAYON_CERCLE_EXTERNE/2
 
 %define    RAYON_MAX             RAYON_CERCLE_EXTERNE/4
@@ -132,7 +132,7 @@ main:
     
     mov al, 1
     cmp al, RANDOM_COLORS
-    je fill_random_colors_kit
+    je start_random_colors_kit
     
     ; remplissage manuel des couleurs du kit
     ; palier 1
@@ -166,31 +166,35 @@ main:
     ; palier n
     mov dword[kit_colors+25*DWORD], 0xff42b3
     
-    mov r13, 0
-    fill_random_colors_kit:
-        mov  di, 256
-        
-        call random_number
-        mov  dl, al      ; rouge
-        
-        call random_number
-        shl  dl, 8
-        mov  dl, al      ; vert
-
-        call random_number
-        shl  dl, 8       
-        mov  dl, al      ; bleu
-        
-        mov  dword[kit_colors+r13*DWORD], edx
-        
-    next_color:
-        inc r13
-        cmp r13, NB_KIT_STEP
-        jb fill_random_colors_kit
+    jmp start
     
+    start_random_colors_kit:
+        fill_random_colors_kit:
+            mov  di, 256
+            
+            call random_number
+            mov  dl, al      ; rouge
+            
+            call random_number
+            shl  dl, 8       ; vert
+            mov  dl, al
+            
+            call random_number
+            shl  dl, 8       ; bleu
+            mov  dl, al
+ 
+            
+            mov  dword[kit_colors+r13*DWORD], edx
+            
+        next_color:
+            inc r13
+            cmp r13, NB_KIT_STEP
+            jb fill_random_colors_kit
+        
     ;########################
     ; création de la fenêtre 
     ;########################
+    start:
     xor    rdi, rdi
     call   XOpenDisplay
     mov    qword[display_name], rax
@@ -353,7 +357,7 @@ dessin:
         cmp    rax, r10
         ja     boucle_cercles_initiaux
         
-    boucle_verif_pre_dans_int: ; vérifie que les cercles initiaux se trouvent dans le cercle interne
+    boucle_verif_pre_dans_int: ; vérifie que les cercles initiaux se trouvent pas dans le cercle interne
         movzx  edi, word[pre_circles_x+r14*WORD]
         movzx  esi, word[pre_circles_y+r14*WORD]
         movzx  edx, word[int_circle_x]
