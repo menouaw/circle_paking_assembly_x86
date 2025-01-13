@@ -35,7 +35,7 @@ extern    exit
 
 %define    NB_KIT_STEP           26
 ; NOTE Mettre "RANDOM_COLORS" à 1 si on veut des couleurs aléatoires
-%define    RANDOM_COLORS         1
+%define    RANDOM_COLORS         0
 
 %define    BACKGROUND_COLOR      0xffc7e9
 %define    WIDTH                 600
